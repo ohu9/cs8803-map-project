@@ -1,2 +1,2 @@
-# cs8803-map
+# cs8803-map-project
 CS8803 Creative Design Practices
