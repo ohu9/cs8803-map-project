@@ -11,7 +11,7 @@
   { "id": 9,  "floor": 2, "name": "Music Practice Rooms", "x": 151, "y": 200, "w": 55, "h": 113 },
   { "id": 10, "floor": 2, "name": "Student Media sitting area", "x": 330, "y": 176, "w": 90, "h": 287 },
   { "id": 11, "floor": 2, "name": "Dancing Goats Coffee sitting area", "x": 66, "y": 343, "w": 86, "h": 180 },
-  { "id": 12, "floor": 2, "name": "Infodesk sitting area", "x": 197, "y": 527, "w": 221, "h": 127 },
+  { "id": 12, "floor": 2, "name": "Infodesk sitting area", "x": 199, "y": 527, "w": 222, "h": 127 },
   { "id": 13, "floor": 2, "name": "DePoe Eye Center sitting area", "x": 66, "y": 579, "w": 92, "h": 69 },
   { "id": 14, "floor": 2, "name": "Noodle Theory/Pop up sitting area", "x": 214, "y": 627, "w": 45, "h": 27 },
   { "id": 15, "floor": 2, "name": "Twisted Taco sitting area", "x": 661, "y": 667, "w": 241, "h": 83 },

@@ -1,146 +1,422 @@
 [
     {
-        "time": "2026-04-07T17:03:15-04:00",
+        "time": "2026-04-07T15:24:00-04:00",
         "rooms": [
             {
                 "id": 1,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
+                "Total num students": 18,
+                "Num groups": 3,
+                "Size of group": 2,
+                "Num empty seats": 6,
+                "Ratio filled/empty seats per table": 0.63,
+                "Num talking": 18,
                 "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Num eating": 11,
+                "Num on phone": 13,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 37
             },
             {
                 "id": 2,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 11,
+                "Num groups": 4,
+                "Size of group": 6,
+                "Num empty seats": 9,
+                "Ratio filled/empty seats per table": 0.37,
+                "Num talking": 6,
+                "Num studying": 5,
+                "Num eating": 7,
+                "Num on phone": 8,
+                "What ppl are eating": [
+                    "Lunch box"
+                ],
+                "Decibel level (dBA)": 44
             },
             {
                 "id": 3,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 12,
+                "Num groups": 1,
+                "Size of group": 5,
+                "Num empty seats": 3,
+                "Ratio filled/empty seats per table": 0.67,
+                "Num talking": 5,
+                "Num studying": 7,
+                "Num eating": 6,
+                "Num on phone": 8,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 40
             },
             {
                 "id": 4,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
+                "Total num students": 7,
+                "Num groups": 6,
+                "Size of group": 2,
+                "Num empty seats": 6,
+                "Ratio filled/empty seats per table": 0.08,
+                "Num talking": 7,
                 "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Num eating": 6,
+                "Num on phone": 3,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 49
             },
             {
                 "id": 5,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 16,
+                "Num groups": 6,
+                "Size of group": 6,
+                "Num empty seats": 10,
+                "Ratio filled/empty seats per table": 0.43,
+                "Num talking": 14,
+                "Num studying": 2,
+                "Num eating": 16,
+                "Num on phone": 15,
+                "What ppl are eating": [
+                    "Lunch box"
+                ],
+                "Decibel level (dBA)": 38
             },
             {
                 "id": 6,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 7,
+                "Num groups": 8,
+                "Size of group": 5,
+                "Num empty seats": 10,
+                "Ratio filled/empty seats per table": 0.3,
+                "Num talking": 1,
+                "Num studying": 6,
+                "Num eating": -1,
+                "Num on phone": 6,
+                "What ppl are eating": [
+                    "Food Truck"
+                ],
+                "Decibel level (dBA)": 22
             },
             {
                 "id": 7,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 8,
+                "Num groups": 2,
+                "Size of group": 3,
+                "Num empty seats": 6,
+                "Ratio filled/empty seats per table": 0.17,
+                "Num talking": 2,
+                "Num studying": 6,
+                "Num eating": 7,
+                "Num on phone": 6,
+                "What ppl are eating": [
+                    "Twisted Taco"
+                ],
+                "Decibel level (dBA)": 43
             },
             {
                 "id": 8,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 18,
+                "Num groups": 4,
+                "Size of group": 4,
+                "Num empty seats": 6,
+                "Ratio filled/empty seats per table": 0.47,
+                "Num talking": 15,
+                "Num studying": 3,
+                "Num eating": 17,
+                "Num on phone": 16,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 44
             },
             {
                 "id": 9,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
+                "Total num students": 6,
+                "Num groups": 3,
+                "Size of group": 3,
+                "Num empty seats": 7,
+                "Ratio filled/empty seats per table": 0.01,
+                "Num talking": 5,
+                "Num studying": 1,
                 "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Num on phone": 3,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 55
             },
             {
                 "id": 10,
-                "Total num students": 0,
-                "Num groups": 0,
-                "Size of group": 0,
-                "Num empty seats": 0,
-                "Ratio filled/empty seats per table": 0,
-                "Num talking": 0,
-                "Num studying": 0,
-                "Num eating": 0,
-                "Num on phone": 0,
-                "What ppl are eating": ["Panda", "Twisted Taco", "Chick-Fil-A", "Noodle Theory", "Blue Donkey"],
-                "Decibel level (dBA)": 0
+                "Total num students": 14,
+                "Num groups": 2,
+                "Size of group": 2,
+                "Num empty seats": 4,
+                "Ratio filled/empty seats per table": 0.18,
+                "Num talking": 10,
+                "Num studying": 4,
+                "Num eating": 11,
+                "Num on phone": 8,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 40
+            },
+            {
+                "id": 11,
+                "Total num students": 8,
+                "Num groups": 3,
+                "Size of group": 4,
+                "Num empty seats": 5,
+                "Ratio filled/empty seats per table": 0.67,
+                "Num talking": 7,
+                "Num studying": 1,
+                "Num eating": 6,
+                "Num on phone": 5,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 22
+            },
+            {
+                "id": 12,
+                "Total num students": 16,
+                "Num groups": 7,
+                "Size of group": 4,
+                "Num empty seats": 8,
+                "Ratio filled/empty seats per table": 0.56,
+                "Num talking": 12,
+                "Num studying": 4,
+                "Num eating": 15,
+                "Num on phone": 13,
+                "What ppl are eating": [
+                    "Tech Eatery"
+                ],
+                "Decibel level (dBA)": 52
+            },
+            {
+                "id": 13,
+                "Total num students": 8,
+                "Num groups": 4,
+                "Size of group": 4,
+                "Num empty seats": 3,
+                "Ratio filled/empty seats per table": 0.28,
+                "Num talking": 5,
+                "Num studying": 3,
+                "Num eating": 5,
+                "Num on phone": 1,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 30
+            },
+            {
+                "id": 14,
+                "Total num students": 17,
+                "Num groups": 8,
+                "Size of group": 5,
+                "Num empty seats": 3,
+                "Ratio filled/empty seats per table": 0.24,
+                "Num talking": 12,
+                "Num studying": 5,
+                "Num eating": 16,
+                "Num on phone": 11,
+                "What ppl are eating": [
+                    "Tech Eatery"
+                ],
+                "Decibel level (dBA)": 43
+            },
+            {
+                "id": 15,
+                "Total num students": 9,
+                "Num groups": 4,
+                "Size of group": 6,
+                "Num empty seats": 11,
+                "Ratio filled/empty seats per table": 0.67,
+                "Num talking": 6,
+                "Num studying": 3,
+                "Num eating": 4,
+                "Num on phone": 4,
+                "What ppl are eating": [
+                    "Food Truck"
+                ],
+                "Decibel level (dBA)": 52
+            },
+            {
+                "id": 16,
+                "Total num students": 5,
+                "Num groups": 4,
+                "Size of group": 3,
+                "Num empty seats": 8,
+                "Ratio filled/empty seats per table": 0.66,
+                "Num talking": 3,
+                "Num studying": 2,
+                "Num eating": 4,
+                "Num on phone": -1,
+                "What ppl are eating": [
+                    "Lunch box"
+                ],
+                "Decibel level (dBA)": 52
+            },
+            {
+                "id": 17,
+                "Total num students": 15,
+                "Num groups": 5,
+                "Size of group": 3,
+                "Num empty seats": 9,
+                "Ratio filled/empty seats per table": 0.24,
+                "Num talking": 12,
+                "Num studying": 3,
+                "Num eating": 11,
+                "Num on phone": 11,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 35
+            },
+            {
+                "id": 18,
+                "Total num students": 12,
+                "Num groups": 4,
+                "Size of group": 3,
+                "Num empty seats": 11,
+                "Ratio filled/empty seats per table": 0.63,
+                "Num talking": 11,
+                "Num studying": 1,
+                "Num eating": 6,
+                "Num on phone": 6,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 59
+            },
+            {
+                "id": 19,
+                "Total num students": 18,
+                "Num groups": 6,
+                "Size of group": 6,
+                "Num empty seats": 11,
+                "Ratio filled/empty seats per table": 0.69,
+                "Num talking": 11,
+                "Num studying": 7,
+                "Num eating": 12,
+                "Num on phone": 17,
+                "What ppl are eating": [
+                    "Chick-Fil-A"
+                ],
+                "Decibel level (dBA)": 28
+            },
+            {
+                "id": 20,
+                "Total num students": 9,
+                "Num groups": 6,
+                "Size of group": 5,
+                "Num empty seats": 4,
+                "Ratio filled/empty seats per table": 0.51,
+                "Num talking": 5,
+                "Num studying": 4,
+                "Num eating": 2,
+                "Num on phone": 9,
+                "What ppl are eating": [
+                    "Marrakech"
+                ],
+                "Decibel level (dBA)": 37
+            },
+            {
+                "id": 21,
+                "Total num students": 13,
+                "Num groups": 6,
+                "Size of group": 6,
+                "Num empty seats": 3,
+                "Ratio filled/empty seats per table": 0.07,
+                "Num talking": 6,
+                "Num studying": 7,
+                "Num eating": 9,
+                "Num on phone": 8,
+                "What ppl are eating": [
+                    "Lunch box"
+                ],
+                "Decibel level (dBA)": 40
+            },
+            {
+                "id": 22,
+                "Total num students": 14,
+                "Num groups": 1,
+                "Size of group": 7,
+                "Num empty seats": 6,
+                "Ratio filled/empty seats per table": 0.39,
+                "Num talking": 9,
+                "Num studying": 5,
+                "Num eating": 14,
+                "Num on phone": 14,
+                "What ppl are eating": [
+                    "Food Truck"
+                ],
+                "Decibel level (dBA)": 28
+            },
+            {
+                "id": 23,
+                "Total num students": 15,
+                "Num groups": 6,
+                "Size of group": 5,
+                "Num empty seats": 2,
+                "Ratio filled/empty seats per table": 0.34,
+                "Num talking": 12,
+                "Num studying": 3,
+                "Num eating": 10,
+                "Num on phone": 12,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 26
+            },
+            {
+                "id": 24,
+                "Total num students": 8,
+                "Num groups": 2,
+                "Size of group": 5,
+                "Num empty seats": 10,
+                "Ratio filled/empty seats per table": 0.61,
+                "Num talking": 3,
+                "Num studying": 5,
+                "Num eating": 2,
+                "Num on phone": 7,
+                "What ppl are eating": [
+                    "Twisted Taco"
+                ],
+                "Decibel level (dBA)": 67
+            },
+            {
+                "id": 25,
+                "Total num students": 7,
+                "Num groups": 7,
+                "Size of group": 4,
+                "Num empty seats": 11,
+                "Ratio filled/empty seats per table": 0.03,
+                "Num talking": 3,
+                "Num studying": 4,
+                "Num eating": 3,
+                "Num on phone": 4,
+                "What ppl are eating": [
+                    "Food Truck"
+                ],
+                "Decibel level (dBA)": 63
+            },
+            {
+                "id": 26,
+                "Total num students": 14,
+                "Num groups": 3,
+                "Size of group": 3,
+                "Num empty seats": 2,
+                "Ratio filled/empty seats per table": 0.13,
+                "Num talking": 13,
+                "Num studying": 1,
+                "Num eating": 10,
+                "Num on phone": 13,
+                "What ppl are eating": [
+                    "Panda"
+                ],
+                "Decibel level (dBA)": 61
             }
         ]
     }
