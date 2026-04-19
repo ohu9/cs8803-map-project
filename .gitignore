@@ -1,0 +1,11 @@
+# Local configurations
+.vscode/
+.DS_Store
+
+# Data source files (not needed for the web app)
+*.xlsx
+
+# Dependency logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

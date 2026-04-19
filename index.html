@@ -9,35 +9,76 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css" />
-    <!-- Load D3.js -->
+    <!-- Load D3.js (for data fetching and parsing) -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Load Three.js (for 3D rendering) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <div class="header">
-        <h1>CS8803 Map Project</h1>
-        <p>Interative Map of Georgia Tech's Student Center</p>
+        <h1>Student Activity throughout the day at the Georgia Tech Student Center</h1>
+        <p>The height of the topological surface represents student crowdedness at each location.</p>
+        <div class="time-slider-container">
+            <span id="slider-time-label">12:00 PM</span>
+            <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="1" value="12" oninput="onSliderChange(this.value)">
+        </div>
     </div>
     
+    <div class="floor-tabs">
+        <button id="tab-floor1" class="tab-button active" onclick="showFloor(1)">Floor 1</button>
+        <button id="tab-floor2" class="tab-button" onclick="showFloor(2)">Floor 2</button>
+        <button id="tab-floor3" class="tab-button" onclick="showFloor(3)">Floor 3</button>
+    </div>
+
     <div class="floors-container">
         <!-- Floor 1 -->
-        <div class="floor-section">
+        <div id="floor-section-1" class="floor-section active">
             <h2>Floor 1</h2>
             <div id="map-container-1" class="map-container"></div>
         </div>
 
         <!-- Floor 2 -->
-        <div class="floor-section">
+        <div id="floor-section-2" class="floor-section">
             <h2>Floor 2</h2>
             <div id="map-container-2" class="map-container"></div>
         </div>
 
         <!-- Floor 3 -->
-        <div class="floor-section">
+        <div id="floor-section-3" class="floor-section">
             <h2>Floor 3</h2>
             <div id="map-container-3" class="map-container"></div>
         </div>
     </div>
-    
+    <!-- TIME SERIES LEGEND UI -->
+    <div class="bivariate-legend" style="width: 250px;">
+        <span class="legend-title">Noise Choropleth</span>
+        <div class="legend-subtitle">Decibel intensity scale</div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color:#475569; font-weight:600; margin-bottom: 4px;">
+            <span>Quiet</span>
+            <span>Loud</span>
+        </div>
+    <div id="dynamic-legend-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #FFCC00, #B3A369); border: 1px solid rgba(0,0,0,0.1);"></div>
+    </div>
+
+    <!-- INSTRUCTIONS LEGEND -->
+    <div class="instructions-panel">
+        <span class="legend-title">Interaction Guide</span>
+        <div class="instruction-item">
+            <span><b>Left Click + Drag:</b> Orbit/Rotate View</span>
+        </div>
+        <div class="instruction-item">
+            <span><b>Right Click + Drag:</b> Translate/Pan View</span>
+        </div>
+        <div class="instruction-item">
+            <span><b>Scroll:</b> Zoom In/Out</span>
+        </div>
+        <div class="instruction-item">
+            <span><b>Hover:</b> View Area Details</span>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIC -->
     <script src="main.js"></script>
 </body>
 </html>
