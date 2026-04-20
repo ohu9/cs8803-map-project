@@ -73,6 +73,12 @@ let isNoiseWaveVisible = true;
 let appMode = 'explore';
 let colorMode = 'bivariate'; // 'bivariate' | 'busyness' | 'noise'
 
+const ACTIVITY_COLORS = {
+    studying: '#3B82F6',
+    talking: '#F59E0B',
+    eating: '#10B981'
+};
+
 // Three.js Renderers Context
 const floorScenes = {}; 
 
@@ -137,6 +143,7 @@ function initFloorMap(containerId, floorNum, roomData) {
         side: THREE.DoubleSide
     });
     const flatFloorMesh = new THREE.Mesh(flatFloorGeo, planeMat);
+    flatFloorMesh.renderOrder = 1; // Base layer
     scene.add(flatFloorMesh);
 
     // BUSYNESS TOPOGRAPHY (Blue wireframe — Total num students → height)
@@ -151,7 +158,8 @@ function initFloorMap(containerId, floorNum, roomData) {
         side: THREE.FrontSide, shininess: 90, wireframe: true
     });
     const busynessMesh = new THREE.Mesh(busynessPlaneGeo, busynessMat);
-    busynessMesh.position.z = 120;
+    busynessMesh.position.z = 30;
+    busynessMesh.renderOrder = 5; // Above map, below tiles
     scene.add(busynessMesh);
 
     // NOISE TOPOGRAPHY (Gold wireframe — Decibel level → height)
@@ -166,7 +174,8 @@ function initFloorMap(containerId, floorNum, roomData) {
         side: THREE.FrontSide, shininess: 90, wireframe: true
     });
     const noiseSurfaceMesh = new THREE.Mesh(noisePlaneGeo, noiseSurfaceMat);
-    noiseSurfaceMesh.position.z = 130; // slight offset to avoid z-fighting when flat
+    noiseSurfaceMesh.position.z = 40; 
+    noiseSurfaceMesh.renderOrder = 5; // Above map, below tiles
     scene.add(noiseSurfaceMesh);
 
     // INTERACTIVITY TILES (Bivariate Base)
@@ -190,22 +199,52 @@ function initFloorMap(containerId, floorNum, roomData) {
         boxMesh.position.set( posX, posY, 2 );
         boxMesh.userData = d; 
         
-        // --- ARCHITECTURAL LABELS ---
-        
-        // Dynamic Floating Name Label (to be animated above peaks)
         const nameLabel = createLabelSprite(d.name, 18, "#003057", false);
-        nameLabel.position.set(0, 0, 150); // Initial hover height
+        nameLabel.position.set(0, 0, 10); 
+        nameLabel.renderOrder = 110; 
+        nameLabel.material.depthTest = false;
         boxMesh.add(nameLabel);
         boxMesh.userData.nameLabel = nameLabel; 
+
+        // Activity Composition Glyph Group
+        const glyphGroup = new THREE.Group();
+        glyphGroup.position.set(0, 0, 10); 
+        glyphGroup.renderOrder = 100;
+        boxMesh.add(glyphGroup);
+        boxMesh.userData.glyphGroup = glyphGroup;
+
+        // Ring segments - Explicit NormalBlending to avoid parent Multiply blending
+        const ringStudy = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: ACTIVITY_COLORS.studying, side: THREE.DoubleSide, depthTest: false,transparent: false }));
+        const ringTalking = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: ACTIVITY_COLORS.talking, side: THREE.DoubleSide, depthTest: false, transparent: false }));
+        const ringEating = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: ACTIVITY_COLORS.eating, side: THREE.DoubleSide, depthTest: false, transparent: false }));
+        
+        [ringStudy, ringTalking, ringEating].forEach(r => { 
+            r.userData.isRing = true;
+            r.renderOrder = 100;
+            glyphGroup.add(r);
+        });
+        boxMesh.userData.rings = { study: ringStudy, talking: ringTalking, eating: ringEating };
+
+        // Dominant Activity Dot - Explicit NormalBlending
+        const dotGeo = new THREE.CircleGeometry(12, 32);
+        const dotMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, depthTest: false, blending: THREE.NormalBlending, transparent: false });
+        const dotMesh = new THREE.Mesh(dotGeo, dotMat);
+        dotMesh.visible = false;
+        dotMesh.userData.isDot = true;
+        dotMesh.renderOrder = 100;
+        glyphGroup.add(dotMesh);
+        boxMesh.userData.activityDot = dotMesh;
 
         // Add structural faint boundary lines
         const edges = new THREE.EdgesGeometry(boxGeo);
         const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 });
         const lineMesh = new THREE.LineSegments(edges, lineMat);
+        lineMesh.renderOrder = 2; 
         boxMesh.add(lineMesh);
         boxMesh.userData.lineMesh = lineMesh;
         boxMesh.userData.baseOpacity = 0.85;
         
+        boxMesh.renderOrder = 10;
         scene.add(boxMesh);
         interactableMeshes.push(boxMesh);
     });
@@ -250,6 +289,19 @@ function animate() {
     requestAnimationFrame(animate);
 
     Object.values(floorScenes).forEach(ctx => {
+        // Zoom-based visibility logic for activity glyphs
+        const dist = ctx.camera.position.distanceTo(ctx.controls.target);
+        const isZoomedOut = dist > 1000;
+
+        ctx.interactableMeshes.forEach(mesh => {
+            const room = mesh.userData;
+            if (room.glyphGroup) {
+                room.glyphGroup.children.forEach(child => {
+                    if (child.userData.isRing) child.visible = !isZoomedOut;
+                    if (child.userData.isDot) child.visible = isZoomedOut;
+                });
+            }
+        });
         // Strict gating: Only process raycasting and control updates for the physically visible floor.
         // This solves the bug where tooltips from hidden floors (like Floor 3) were being hit while on Floor 2.
         if (ctx.floorNum === currentFloor) {
@@ -316,9 +368,30 @@ function animate() {
                     <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 10px;">
                         <div style="width: 12px; height: 12px; border-radius: 3px; background: ${bivariateColor}; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0;"></div>
                         <div style="font-size: 11px; color: #64748b; line-height: 1.4;"><b>Bivariate color:</b> Noise + busyness</div>
-                    </div>
-                    <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 6px;">
-                        ${d.csvData['Num studying']} studying &middot; ${d.csvData['Num eating']} eating &middot; ${d.csvData['Num talking']} talking
+                    </div>`;
+                    const nStudy = +d.csvData['Num studying'] || 0;
+                    const nEating = +d.csvData['Num eating'] || 0;
+                    const nTalking = +d.csvData['Num talking'] || 0;
+                    const totalAct = nStudy + nEating + nTalking;
+                    
+                    const pStudy = totalAct > 0 ? Math.round((nStudy / totalAct) * 100) : 0;
+                    const pEating = totalAct > 0 ? Math.round((nEating / totalAct) * 100) : 0;
+                    const pTalking = totalAct > 0 ? Math.round((nTalking / totalAct) * 100) : 0;
+
+                    tooltipContent += `
+                    <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #3B82F6; flex-shrink: 0;"></div>
+                            <span>${nStudy} studying (${pStudy}%)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; flex-shrink: 0;"></div>
+                            <span>${nEating} eating (${pEating}%)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex-shrink: 0;"></div>
+                            <span>${nTalking} talking (${pTalking}%)</span>
+                        </div>
                     </div>`;
                 }
 
@@ -440,7 +513,7 @@ function updateFloorDisplacement(floorNum) {
         });
 
         const anyVisible = isBusynessVisible || isNoiseWaveVisible;
-        mesh.userData.nameLabel.position.z = anyVisible ? (Math.min(peakZ, 800) + 40 + 120) : 40;
+        // Glyphs and Labels are now on a fixed plane at Z=5 to stay unaffected by topography peaks
     });
 }
 
@@ -470,6 +543,44 @@ function updateAllMaps() {
                 const busy_t = Math.max(0, Math.min(1, students / 65));
                 mesh.material.color.set(getBivariateColor(busy_t, noise_t));
                 
+                const numStudents = +rm.csvData['Total num students'];
+                
+                const numStudying = +rm.csvData['Num studying'] || 0;
+                const numTalking = +rm.csvData['Num talking'] || 0;
+                const numEating = +rm.csvData['Num eating'] || 0;
+                const totalActivity = numStudying + numTalking + numEating;
+
+                if (mesh.userData.glyphGroup) {
+                    if (totalActivity > 0) {
+                        mesh.userData.glyphGroup.visible = true;
+                        const sP = numStudying / totalActivity;
+                        const tP = numTalking / totalActivity;
+                        const eP = numEating / totalActivity;
+
+                        const inner = 18, outer = 28;
+                        const sAngle = sP * Math.PI * 2;
+                        const tAngle = tP * Math.PI * 2;
+                        const eAngle = eP * Math.PI * 2;
+
+                        // Recreate geometries for arc segments
+                        if (mesh.userData.rings.study.geometry) mesh.userData.rings.study.geometry.dispose();
+                        if (mesh.userData.rings.talking.geometry) mesh.userData.rings.talking.geometry.dispose();
+                        if (mesh.userData.rings.eating.geometry) mesh.userData.rings.eating.geometry.dispose();
+
+                        mesh.userData.rings.study.geometry = new THREE.RingGeometry(inner, outer, 32, 1, 0, sAngle);
+                        mesh.userData.rings.talking.geometry = new THREE.RingGeometry(inner, outer, 32, 1, sAngle, tAngle);
+                        mesh.userData.rings.eating.geometry = new THREE.RingGeometry(inner, outer, 32, 1, sAngle + tAngle, eAngle);
+
+                        // Update dot color to dominant activity
+                        let dominant = 'studying';
+                        if (numTalking > numStudying && numTalking > numEating) dominant = 'talking';
+                        if (numEating > numStudying && numEating > numTalking) dominant = 'eating';
+                        mesh.userData.activityDot.material.color.set(ACTIVITY_COLORS[dominant]);
+                    } else {
+                        mesh.userData.glyphGroup.visible = false;
+                    }
+                }
+
                 // Seat Selector Filtering
                 let isMatch = true;
                 if (appMode === 'seat-selector') {
@@ -477,9 +588,6 @@ function updateAllMaps() {
                     const noisePref = document.getElementById('filter-noise').value;
                     const groupSize = document.getElementById('filter-group-size').value;
                     
-                    const numStudying = +rm.csvData['Num studying'];
-                    const numEating = +rm.csvData['Num eating'];
-                    const numTalking = +rm.csvData['Num talking'];
                     const numStudents = +rm.csvData['Total num students'];
                     
                     // Filter: Activity
@@ -500,9 +608,8 @@ function updateAllMaps() {
                 mesh.userData.baseOpacity = isMatch ? 0.85 : 0.05;
                 mesh.material.opacity = mesh.userData.baseOpacity; 
                 mesh.material.visible = true;
-                mesh.material.depthTest = false; 
-                // Set blending mode to Multiply, ensuring the black numbers + lines on the floor images strike through the colors boldly!
                 mesh.material.blending = THREE.MultiplyBlending;
+                mesh.material.depthTest = true;
             } else {
                 mesh.material.visible = false;
             }
