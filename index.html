@@ -106,7 +106,7 @@
             </div>
 
             <!-- Color Mode -->
-            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
+            <div style="border-top: 1px solid rgba(0,0,0,1); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
                 <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Color Mode</div>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
                     <input type="radio" name="color-mode" value="bivariate" id="mode-bivariate" checked style="cursor: pointer;"> Bivariate (default)
@@ -117,16 +117,19 @@
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
                     <input type="radio" name="color-mode" value="noise" id="mode-noise" style="cursor: pointer; accent-color: #B3A369;"> Noise Only
                 </label>
+                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                    <input type="radio" name="color-mode" value="none" id="mode-none" style="cursor: pointer; accent-color: #fff;"> None
+                </label>
             </div>
 
             <!-- Topography Wave Toggles -->
             <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
                 <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Topography Waves</div>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
-                    <input type="checkbox" id="toggle-busyness-wave" checked style="accent-color: #2e4b7e; cursor: pointer;"> Show Busyness Wave
+                    <input type="checkbox" id="toggle-busyness-wave" style="accent-color: #2e4b7e; cursor: pointer;"> Show Busyness Wave
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
-                    <input type="checkbox" id="toggle-noise-wave" checked style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
+                    <input type="checkbox" id="toggle-noise-wave" style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
                 </label>
             </div>
 

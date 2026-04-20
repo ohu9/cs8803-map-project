@@ -68,8 +68,8 @@ let currentMapData = [];
 let currentTime = "4/7/2026 12:00";
 let currentSliderValue = 12;
 let currentFloor = 1;
-let isBusynessVisible = true;
-let isNoiseWaveVisible = true;
+let isBusynessVisible = false;
+let isNoiseWaveVisible = false;
 let appMode = 'explore';
 let colorMode = 'bivariate'; // 'bivariate' | 'busyness' | 'noise'
 
@@ -150,7 +150,7 @@ function initFloorMap(containerId, floorNum, roomData) {
     const busynessPlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
     const busynessColors = [];
     for (let i = 0; i < busynessPlaneGeo.attributes.position.count; i++) {
-        busynessColors.push(0.23, 0.51, 0.96); // #3B82F6 blue
+        busynessColors.push(0.23, 0.51, 0.96); // #284d89ff blue
     }
     busynessPlaneGeo.setAttribute('color', new THREE.Float32BufferAttribute(busynessColors, 3));
     const busynessMat = new THREE.MeshPhongMaterial({
@@ -364,33 +364,34 @@ function animate() {
                             <div style="width: 12px; height: 12px; border-radius: 3px; background: ${noiseColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
                             <span style="color: #333;"><b>Noise:</b> <strong style="color: #B3A369;">${noise} dBA</strong></span>
                         </div>
-                    </div>
+                    </div>`;
+                    const studying = +d.csvData['Num studying'] || 0;
+                    const eating = +d.csvData['Num eating'] || 0;
+                    const talking = +d.csvData['Num talking'] || 0;
+                    const totalAct = studying + eating + talking;
+                    const sP = totalAct > 0 ? Math.round((studying / totalAct) * 100) : 0;
+                    const eP = totalAct > 0 ? Math.round((eating / totalAct) * 100) : 0;
+                    const tP = totalAct > 0 ? Math.round((talking / totalAct) * 100) : 0;
+
+                    tooltipContent += `
                     <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 10px;">
                         <div style="width: 12px; height: 12px; border-radius: 3px; background: ${bivariateColor}; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0;"></div>
                         <div style="font-size: 11px; color: #64748b; line-height: 1.4;"><b>Bivariate color:</b> Noise + busyness</div>
-                    </div>`;
-                    const nStudy = +d.csvData['Num studying'] || 0;
-                    const nEating = +d.csvData['Num eating'] || 0;
-                    const nTalking = +d.csvData['Num talking'] || 0;
-                    const totalAct = nStudy + nEating + nTalking;
-                    
-                    const pStudy = totalAct > 0 ? Math.round((nStudy / totalAct) * 100) : 0;
-                    const pEating = totalAct > 0 ? Math.round((nEating / totalAct) * 100) : 0;
-                    const pTalking = totalAct > 0 ? Math.round((nTalking / totalAct) * 100) : 0;
-
-                    tooltipContent += `
-                    <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
+                    </div>
+                    <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
                             <div style="width: 8px; height: 8px; border-radius: 50%; background: #3B82F6; flex-shrink: 0;"></div>
-                            <span>${nStudy} studying (${pStudy}%)</span>
+                            <span>${studying} studying (${sP}%)</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #cbd5e1;">&bull;</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
                             <div style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; flex-shrink: 0;"></div>
-                            <span>${nEating} eating (${pEating}%)</span>
+                            <span>${eating} eating (${eP}%)</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color: #cbd5e1;">&bull;</span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
                             <div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex-shrink: 0;"></div>
-                            <span>${nTalking} talking (${pTalking}%)</span>
+                            <span>${talking} talking (${tP}%)</span>
                         </div>
                     </div>`;
                 }
@@ -606,7 +607,9 @@ function updateAllMaps() {
                 }
                 
                 mesh.userData.baseOpacity = isMatch ? 0.85 : 0.05;
-                mesh.material.opacity = mesh.userData.baseOpacity; 
+                // In 'none' mode, we keep the mesh opaque (1.0) but colored white with Multiply blending,
+                // which makes the room color invisible while keeping the tooltip raycasting active.
+                mesh.material.opacity = (colorMode === 'none' && isMatch) ? 1.0 : mesh.userData.baseOpacity; 
                 mesh.material.visible = true;
                 mesh.material.blending = THREE.MultiplyBlending;
                 mesh.material.depthTest = true;
@@ -709,6 +712,8 @@ function getBivariateColor(busy_t, noise_t) {
 
     if (colorMode === 'busyness') return `rgb(${bR},${bG},${bB})`;
     if (colorMode === 'noise')    return `rgb(${gR},${gG},${gB})`;
+    if (colorMode === 'none')     return '#ffffff';
+    
     // Bivariate: multiplicative blend (white * anything = anything; corner = mix)
     const r = Math.round(bR * gR / 255);
     const g = Math.round(bG * gG / 255);
