@@ -300,11 +300,13 @@ function animate() {
                     const noiseColor    = `rgb(${goldR},${goldG},${goldB})`;
                     const bivariateColor = getBivariateColor(busy_t, noise_t);
 
+                    const busyPercent = Math.round(busy_t * 100);
+
                     tooltipContent += `
                     <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; margin-bottom: 8px;">
                         <div style="display: flex; align-items: center; gap: 7px;">
                             <div style="width: 12px; height: 12px; border-radius: 3px; background: ${busynessColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
-                            <span style="color: #333;"><b>Busyness:</b> <strong style="color: #2e4b7e;">${students} students</strong></span>
+                            <span style="color: #333;"><b>Busyness:</b> <strong style="color: #2e4b7e;">${busyPercent}% (${students} students)</strong></span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 7px;">
                             <div style="width: 12px; height: 12px; border-radius: 3px; background: ${noiseColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
