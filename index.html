@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Find your spot in the Student Center!</h1>
+        <h1>Activity Levels in the Georgia Tech Student Center</h1>
         <p>Explore the rhythms of campus life and discover the perfect spot for your needs.</p>
     </div>
 
@@ -100,27 +100,55 @@
         </div> <!-- End right-content -->
     </div> <!-- End main-layout -->
     
-    <!-- TIME SERIES LEGEND UI -->
+    <!-- CHOROPLETH LEGEND -->
     <div class="bivariate-legend" style="width: 250px;">
-        <span class="legend-title">Busyness Topography</span>
-        <div class="legend-subtitle">Student crowdedness scale</div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color:#475569; font-weight:600; margin-bottom: 4px;">
-            <span>Empty</span>
-            <span>Crowded</span>
-        </div>
-        <div id="dynamic-busyness-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #D4C491); border: 1px solid rgba(0,0,0,0.1); margin-bottom: 16px;"></div>
+        <span class="legend-title">Floor Color Scale</span>
+        <div class="legend-subtitle">Noise (gold) × Busyness (blue)</div>
 
-        <span class="legend-title">Noise Choropleth</span>
-        <div class="legend-subtitle">Decibel intensity scale</div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color:#475569; font-weight:600; margin-bottom: 4px;">
-            <span>Quiet</span>
-            <span>Loud</span>
+        <!-- 2D Bivariate Grid -->
+        <div style="display: flex; align-items: flex-start; gap: 4px; margin: 12px 0 4px;">
+            <!-- "Noise" axis label (rotated) -->
+            <div style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; height: 80px; display: flex; align-items: center; justify-content: center;">Noise</div>
+            <!-- Y-axis: Loud/Quiet pinned to top/bottom of grid -->
+            <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 80px;">
+                <span style="font-size: 9px; font-weight: 700; color: #B3A369; line-height: 1;">Loud</span>
+                <span style="font-size: 9px; font-weight: 700; color: #aaa; line-height: 1;">Quiet</span>
+            </div>
+            <!-- Grid + X-axis labels -->
+            <div>
+                <div id="bivariate-grid" style="display: grid; grid-template-columns: repeat(4, 20px); grid-template-rows: repeat(4, 20px); gap: 0; margin-bottom: 4px;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; width: 80px;">
+                    <span style="color: #aaa;">Empty</span>
+                    <span style="color: #2e4b7e;">Crowded</span>
+                </div>
+                <div style="text-align: center; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; width: 80px; margin-top: 3px;">Busyness</div>
+            </div>
         </div>
-        <div id="dynamic-legend-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #FFCC00, #B3A369); border: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px;"></div>
-        <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px;">
-            <input type="checkbox" id="toggle-3d-wave" checked style="margin-right: 6px; cursor: pointer;">
-            Show 3D Topography
-        </label>
+
+        <!-- Color Mode -->
+        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
+            <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Color Mode</div>
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                <input type="radio" name="color-mode" value="bivariate" id="mode-bivariate" checked style="cursor: pointer;"> Bivariate (default)
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                <input type="radio" name="color-mode" value="busyness" id="mode-busyness" style="cursor: pointer; accent-color: #2e4b7e;"> Busyness Only
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                <input type="radio" name="color-mode" value="noise" id="mode-noise" style="cursor: pointer; accent-color: #B3A369;"> Noise Only
+            </label>
+        </div>
+
+        <!-- Topography Wave Toggles -->
+        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Topography Waves</div>
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
+                <input type="checkbox" id="toggle-busyness-wave" checked style="accent-color: #2e4b7e; cursor: pointer;"> Show Busyness Wave
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
+                <input type="checkbox" id="toggle-noise-wave" checked style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
+            </label>
+        </div>
     </div>
 
     <!-- INSTRUCTIONS LEGEND -->

@@ -68,8 +68,10 @@ let currentMapData = [];
 let currentTime = "4/7/2026 12:00";
 let currentSliderValue = 12;
 let currentFloor = 1;
-let isWaveVisible = true;
-let appMode = 'explore'; // 'explore' or 'seat-selector'
+let isBusynessVisible = true;
+let isNoiseWaveVisible = true;
+let appMode = 'explore';
+let colorMode = 'bivariate'; // 'bivariate' | 'busyness' | 'noise'
 
 // Three.js Renderers Context
 const floorScenes = {}; 
@@ -137,29 +139,35 @@ function initFloorMap(containerId, floorNum, roomData) {
     const flatFloorMesh = new THREE.Mesh(flatFloorGeo, planeMat);
     scene.add(flatFloorMesh);
 
-    // 3D NOISE TOPOLOGY SURFACE (HOVERING OVER FLOOR)
-    const planeGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
-    
-    // Initialize vertex colors array
-    const colors = [];
-    for ( let i = 0; i < planeGeo.attributes.position.count; i ++ ) {
-        colors.push( 0, 0, 1 ); // Default to blue Base
+    // BUSYNESS TOPOGRAPHY (Blue wireframe — Total num students → height)
+    const busynessPlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
+    const busynessColors = [];
+    for (let i = 0; i < busynessPlaneGeo.attributes.position.count; i++) {
+        busynessColors.push(0.23, 0.51, 0.96); // #3B82F6 blue
     }
-    planeGeo.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-
-    const noiseMat = new THREE.MeshPhongMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.9,
-        side: THREE.FrontSide,
-        shininess: 90,
-        wireframe: true
+    busynessPlaneGeo.setAttribute('color', new THREE.Float32BufferAttribute(busynessColors, 3));
+    const busynessMat = new THREE.MeshPhongMaterial({
+        vertexColors: true, transparent: true, opacity: 0.75,
+        side: THREE.FrontSide, shininess: 90, wireframe: true
     });
-    
-    const surfaceMesh = new THREE.Mesh(planeGeo, noiseMat);
-    // Hover gracefully just above the floor mapping
-    surfaceMesh.position.z = 120; 
-    scene.add(surfaceMesh);
+    const busynessMesh = new THREE.Mesh(busynessPlaneGeo, busynessMat);
+    busynessMesh.position.z = 120;
+    scene.add(busynessMesh);
+
+    // NOISE TOPOGRAPHY (Gold wireframe — Decibel level → height)
+    const noisePlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
+    const noiseColors = [];
+    for (let i = 0; i < noisePlaneGeo.attributes.position.count; i++) {
+        noiseColors.push(0.7, 0.64, 0.41); // #B3A369 gold
+    }
+    noisePlaneGeo.setAttribute('color', new THREE.Float32BufferAttribute(noiseColors, 3));
+    const noiseSurfaceMat = new THREE.MeshPhongMaterial({
+        vertexColors: true, transparent: true, opacity: 0.75,
+        side: THREE.FrontSide, shininess: 90, wireframe: true
+    });
+    const noiseSurfaceMesh = new THREE.Mesh(noisePlaneGeo, noiseSurfaceMat);
+    noiseSurfaceMesh.position.z = 130; // slight offset to avoid z-fighting when flat
+    scene.add(noiseSurfaceMesh);
 
     // INTERACTIVITY TILES (Bivariate Base)
     const floorRooms = roomData.filter(d => d.floor === floorNum);
@@ -228,9 +236,11 @@ function initFloorMap(containerId, floorNum, roomData) {
     renderer.domElement.addEventListener('mouseleave', onMouseLeave, false);
 
     floorScenes[floorNum] = {
-        container, renderer, scene, camera, controls, planeGeo, 
-        surfaceMesh, raycaster, mouse, interactableMeshes, floorRooms, 
-        hoveredBox: null, floorNum: floorNum // Store floorNum for strict gating
+        container, renderer, scene, camera, controls,
+        busynessPlaneGeo, busynessMesh,
+        noisePlaneGeo, noiseSurfaceMesh,
+        raycaster, mouse, interactableMeshes, floorRooms,
+        hoveredBox: null, floorNum: floorNum
     };
 
     updateFloorDisplacement(floorNum);
@@ -274,10 +284,36 @@ function animate() {
                     <span style="color: #666666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Area ${d.id} | Floor ${d.floor}</span><br/>
                     <hr style="border:none; border-top:1px solid #e0e0e0; margin: 8px 0;">`;
                 if (d.csvData) {
+                    const noise = +d.csvData['Decibel level (dBA)'];
+                    const students = +d.csvData['Total num students'];
+                    const noise_t = Math.max(0, Math.min(1, (noise - 45) / 27));
+                    const busy_t  = Math.max(0, Math.min(1, students / 65));
+
+                    // Individual axis colors
+                    const blueR = Math.round(255 + (46  - 255) * busy_t);
+                    const blueG = Math.round(255 + (75  - 255) * busy_t);
+                    const blueB = Math.round(255 + (126 - 255) * busy_t);
+                    const goldR = Math.round(255 + (179 - 255) * noise_t);
+                    const goldG = Math.round(255 + (163 - 255) * noise_t);
+                    const goldB = Math.round(255 + (105 - 255) * noise_t);
+                    const busynessColor = `rgb(${blueR},${blueG},${blueB})`;
+                    const noiseColor    = `rgb(${goldR},${goldG},${goldB})`;
+                    const bivariateColor = getBivariateColor(busy_t, noise_t);
+
                     tooltipContent += `
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
-                        <span style="color: #333333"><b>Students:</b> <strong style="color: #003057">${d.csvData['Total num students']}</strong></span>
-                        <span style="color: #333333"><b>Noise:</b> <strong style="color: #B3A369">${d.csvData['Decibel level (dBA)']} dBA</strong></span>
+                    <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 7px;">
+                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${busynessColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
+                            <span style="color: #333;"><b>Busyness:</b> <strong style="color: #2e4b7e;">${students} students</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 7px;">
+                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${noiseColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
+                            <span style="color: #333;"><b>Noise:</b> <strong style="color: #B3A369;">${noise} dBA</strong></span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 10px;">
+                        <div style="width: 12px; height: 12px; border-radius: 3px; background: ${bivariateColor}; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0;"></div>
+                        <div style="font-size: 11px; color: #64748b; line-height: 1.4;"><b>Bivariate color:</b> Noise + busyness</div>
                     </div>
                     <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 6px;">
                         ${d.csvData['Num studying']} studying &middot; ${d.csvData['Num eating']} eating &middot; ${d.csvData['Num talking']} talking
@@ -304,68 +340,83 @@ function animate() {
 }
 animate();
 
-function updateFloorDisplacement(floorNum, timeT = 0) {
+function updateFloorDisplacement(floorNum) {
     const ctx = floorScenes[floorNum];
     if (!ctx) return;
 
-    const positions = ctx.planeGeo.attributes.position;
-    const colors = ctx.planeGeo.attributes.color;
-    const verticesCount = positions.count;
-
-    for(let i=0; i < verticesCount; i++) {
-        const vx = positions.getX(i);
-        const vy = positions.getY(i);
-        positions.setZ(i, 0);
-    }
-    
     const tempColor = new THREE.Color();
 
-    for(let i=0; i < verticesCount; i++) {
-        const vx = positions.getX(i);
-        const vy = positions.getY(i);
-        let finalZ = 0;
+    // --- BUSYNESS SURFACE (Blue, driven by Total num students) ---
+    {
+        const positions = ctx.busynessPlaneGeo.attributes.position;
+        const colors = ctx.busynessPlaneGeo.attributes.color;
+        const count = positions.count;
+        const blueColor = new THREE.Color('#2e4b7e');
 
-        ctx.floorRooms.forEach(room => {
-            if (!room.csvData) return;
-            // Switching the core driver to Total Students to provide perfectly symmetrical height mapping
-            const students = +room.csvData['Total num students'];
-            if (isNaN(students) || students < 1) return; 
+        for (let i = 0; i < count; i++) {
+            const vx = positions.getX(i);
+            const vy = positions.getY(i);
+            let finalZ = 0;
 
-            const threeX = (room.x + room.w/2) - 500;
-            const threeY = 500 - (room.y + room.h/2);
+            ctx.floorRooms.forEach(room => {
+                if (!room.csvData) return;
+                const students = +room.csvData['Total num students'];
+                if (isNaN(students) || students < 1) return;
+                const threeX = (room.x + room.w/2) - 500;
+                const threeY = 500 - (room.y + room.h/2);
+                const dx = vx - threeX, dy = vy - threeY;
+                const distSq = dx*dx + dy*dy;
+                const spread = (Math.max(room.w, room.h) * 0.45) ** 2;
+                const heightAmplifier = (students / 65) * 700;
+                finalZ += heightAmplifier * Math.exp(-distSq / spread);
+            });
 
-            const dx = vx - threeX;
-            const dy = vy - threeY;
-            const distSq = dx*dx + dy*dy;
-            
-            // Tight spread to maintain clear "spikes"
-            const spread = (Math.max(room.w, room.h) * 0.45) ** 2;
-            
-            // Linear scaling to ensure height visually reflects exact proportional differences
-            const MAX_STUDENTS = 65; 
-            const heightAmplifier = (students / MAX_STUDENTS) * 700;
-            
-            const zContribution = heightAmplifier * Math.exp(-distSq / spread);
-            finalZ += zContribution;
-        });
-
-        // Cap height at a high limit
-        const clampedZ = Math.min(finalZ, 800);
-        positions.setZ(i, clampedZ);
-        
-        // Fetch perfectly interpolated D3 time/intensity scale color
-        const heightPercent = Math.min(clampedZ / 500, 1.0); 
-        const mappedColor = getSurfaceColor(heightPercent, timeT);
-        tempColor.set(mappedColor);
-        colors.setXYZ(i, tempColor.r, tempColor.g, tempColor.b);
+            const clampedZ = Math.min(finalZ, 800);
+            positions.setZ(i, clampedZ);
+            colors.setXYZ(i, blueColor.r, blueColor.g, blueColor.b);
+        }
+        ctx.busynessPlaneGeo.attributes.position.needsUpdate = true;
+        ctx.busynessPlaneGeo.attributes.color.needsUpdate = true;
+        ctx.busynessPlaneGeo.computeVertexNormals();
     }
-    
-    ctx.planeGeo.attributes.position.needsUpdate = true;
-    ctx.planeGeo.attributes.color.needsUpdate = true;
-    ctx.planeGeo.computeVertexNormals();
+
+    // --- NOISE SURFACE (Gold, driven by Decibel level) ---
+    {
+        const positions = ctx.noisePlaneGeo.attributes.position;
+        const colors = ctx.noisePlaneGeo.attributes.color;
+        const count = positions.count;
+        const goldColor = new THREE.Color('#B3A369');
+        const MAX_DB = 80; const MIN_DB = 35;
+
+        for (let i = 0; i < count; i++) {
+            const vx = positions.getX(i);
+            const vy = positions.getY(i);
+            let finalZ = 0;
+
+            ctx.floorRooms.forEach(room => {
+                if (!room.csvData) return;
+                const db = +room.csvData['Decibel level (dBA)'];
+                if (isNaN(db) || db < 1) return;
+                const threeX = (room.x + room.w/2) - 500;
+                const threeY = 500 - (room.y + room.h/2);
+                const dx = vx - threeX, dy = vy - threeY;
+                const distSq = dx*dx + dy*dy;
+                const spread = (Math.max(room.w, room.h) * 0.45) ** 2;
+                const normalized = Math.max(0, Math.min(1, (db - MIN_DB) / (MAX_DB - MIN_DB)));
+                const heightAmplifier = normalized * 700;
+                finalZ += heightAmplifier * Math.exp(-distSq / spread);
+            });
+
+            const clampedZ = Math.min(finalZ, 800);
+            positions.setZ(i, clampedZ);
+            colors.setXYZ(i, goldColor.r, goldColor.g, goldColor.b);
+        }
+        ctx.noisePlaneGeo.attributes.position.needsUpdate = true;
+        ctx.noisePlaneGeo.attributes.color.needsUpdate = true;
+        ctx.noisePlaneGeo.computeVertexNormals();
+    }
 
     // --- DYNAMIC LABEL HEIGHT SYNCING ---
-    // Reposition room names to float precisely above their topological peaks
     ctx.interactableMeshes.forEach(mesh => {
         const room = mesh.userData;
         if (!room.nameLabel) return;
@@ -374,57 +425,32 @@ function updateFloorDisplacement(floorNum, timeT = 0) {
         const centerY = 500 - (room.y + room.h/2);
         let peakZ = 0;
 
-        // Calculate the combined Z contribution from all current peaks at this specific room's location
         ctx.floorRooms.forEach(peakRoom => {
             if (!peakRoom.csvData) return;
             const students = +peakRoom.csvData['Total num students'];
             if (isNaN(students) || students < 1) return;
-
             const px = (peakRoom.x + peakRoom.w/2) - 500;
             const py = 500 - (peakRoom.y + peakRoom.h/2);
-
-            const dx = centerX - px;
-            const dy = centerY - py;
+            const dx = centerX - px, dy = centerY - py;
             const distSq = dx*dx + dy*dy;
             const spread = (Math.max(peakRoom.w, peakRoom.h) * 0.45) ** 2;
-            const heightAmplifier = (students / 65) * 700;
-            
-            peakZ += heightAmplifier * Math.exp(-distSq / spread);
+            peakZ += (students / 65) * 700 * Math.exp(-distSq / spread);
         });
 
-        // Anchor the label 40 units above the 3D surface grid (which itself is at Z=120)
-        // We add the surfaceMesh.position.z (120) to keep it in sync with the visual topological layer.
-        // If 3D topography is hidden, drop the labels near the floor level.
-        mesh.userData.nameLabel.position.z = isWaveVisible ? (Math.min(peakZ, 800) + 40 + 120) : 40;
+        const anyVisible = isBusynessVisible || isNoiseWaveVisible;
+        mesh.userData.nameLabel.position.z = anyVisible ? (Math.min(peakZ, 800) + 40 + 120) : 40;
     });
 }
 
 function updateAllMaps() {
-    const t = (currentSliderValue - 12) / 8.0; // 0.0 to 1.0 (12pm to 8pm)
-    
-    // Update legend bar dynamically
-    const legendGoldEnd = d3.interpolateRgb("#B3A369", "#003057")(t);
-    const legendMid = d3.interpolateRgb("#FFCC00", "#b1c3d6")(t);
-    document.getElementById('dynamic-legend-bar').style.background = `linear-gradient(to right, #f8fafc, ${legendMid}, ${legendGoldEnd})`;
-    
-    // Update busyness bar dynamically
-    const topoColor = getSurfaceColor(1.0, t);
-    const busynessBar = document.getElementById('dynamic-busyness-bar');
-    if (busynessBar) {
-        busynessBar.style.background = `linear-gradient(to right, #f8fafc, ${topoColor})`;
-    }
-
-    // Update thumb color dynamically
-    document.documentElement.style.setProperty('--slider-thumb-color', legendGoldEnd);
-
     [1, 2, 3].forEach(floorNum => {
         const ctx = floorScenes[floorNum];
         if (!ctx) return;
         
-        // Dynamically scale surface opacity based on time to keep evening views light and legible
-        // Day (Gold) = 0.9 opacity | Night (Navy) = 0.5 opacity
-        ctx.surfaceMesh.material.opacity = d3.interpolateNumber(0.9, 0.5)(t);
-        ctx.surfaceMesh.visible = isWaveVisible;
+        ctx.busynessMesh.material.opacity = 0.75;
+        ctx.busynessMesh.visible = isBusynessVisible;
+        ctx.noiseSurfaceMesh.material.opacity = 0.75;
+        ctx.noiseSurfaceMesh.visible = isNoiseWaveVisible;
         
         const timeData = currentMapData.filter(d => d['Date Time'] === currentTime);
         
@@ -437,10 +463,10 @@ function updateAllMaps() {
             const rm = mesh.userData;
             if (rm.csvData) {
                 const noise = +rm.csvData['Decibel level (dBA)'];
-                // Drastic Intensification: Scaling noise between 45 and 72 dBA to ensure 
-                // meaningful color changes even in the middle of the standard decibel range.
-                const intensity = Math.max(0, Math.min(1, (noise - 45) / 27));
-                mesh.material.color.set(getChoroplethColor(intensity, t));
+                const students = +rm.csvData['Total num students'];
+                const noise_t = Math.max(0, Math.min(1, (noise - 45) / 27));
+                const busy_t = Math.max(0, Math.min(1, students / 65));
+                mesh.material.color.set(getBivariateColor(busy_t, noise_t));
                 
                 // Seat Selector Filtering
                 let isMatch = true;
@@ -480,8 +506,8 @@ function updateAllMaps() {
             }
         });
 
-        // Trigger rebuild passing down slider interpolation constant
-        updateFloorDisplacement(floorNum, t);
+        // Trigger rebuild
+        updateFloorDisplacement(floorNum);
     });
 }
 
@@ -515,8 +541,13 @@ function onSliderChange(val) {
     updateAllMaps();
 }
 
-document.getElementById('toggle-3d-wave').addEventListener('change', function(e) {
-    isWaveVisible = e.target.checked;
+document.getElementById('toggle-busyness-wave').addEventListener('change', function(e) {
+    isBusynessVisible = e.target.checked;
+    updateAllMaps();
+});
+
+document.getElementById('toggle-noise-wave').addEventListener('change', function(e) {
+    isNoiseWaveVisible = e.target.checked;
     updateAllMaps();
 });
 
@@ -557,18 +588,47 @@ window.updateFilters = function() {
     updateAllMaps();
 };
 
-function getSurfaceColor(intensityNormal, timeT) {
-    // UNIFORM COLOR MODE: Surface color is based only on global time blending.
-    const dayColor = "#B3A369";
-    const eveningColor = "#003057"; 
-    return d3.interpolateRgb(dayColor, eveningColor)(timeT);
+function getBivariateColor(busy_t, noise_t) {
+    // Blue channel: white → #2e4b7e (busyness)
+    const bR = Math.round(255 + (46  - 255) * busy_t);
+    const bG = Math.round(255 + (75  - 255) * busy_t);
+    const bB = Math.round(255 + (126 - 255) * busy_t);
+    // Gold channel: white → #B3A369 (noise)
+    const gR = Math.round(255 + (179 - 255) * noise_t);
+    const gG = Math.round(255 + (163 - 255) * noise_t);
+    const gB = Math.round(255 + (105 - 255) * noise_t);
+
+    if (colorMode === 'busyness') return `rgb(${bR},${bG},${bB})`;
+    if (colorMode === 'noise')    return `rgb(${gR},${gG},${gB})`;
+    // Bivariate: multiplicative blend (white * anything = anything; corner = mix)
+    const r = Math.round(bR * gR / 255);
+    const g = Math.round(bG * gG / 255);
+    const b = Math.round(bB * gB / 255);
+    return `rgb(${r},${g},${b})`;
 }
 
-function getChoroplethColor(intensity, timeT) {
-    // DRASTIC HUE MODE: The floor tiles use a high-contrast scale to show noise levels.
-    const goldScale = d3.scaleLinear().domain([0, 0.5, 1.0]).range(["#ffffff", "#FFCC00", "#997A00"]);
-    const navyScale = d3.scaleLinear().domain([0, 0.5, 1.0]).range(["#ffffff", "#b1c3d6", "#001A33"]);
-    return d3.interpolateRgb(goldScale(intensity), navyScale(intensity))(timeT);
+function drawBivariateGrid() {
+    const grid = document.getElementById('bivariate-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const N = 4;
+    // Rows: noise high (top) → low (bottom); Cols: busy low (left) → high (right)
+    for (let ni = N - 1; ni >= 0; ni--) {
+        for (let bi = 0; bi < N; bi++) {
+            const cell = document.createElement('div');
+            cell.style.cssText = 'width:20px;height:20px;border-radius:3px;border:1px solid rgba(0,0,0,0.07);';
+            // Always draw bivariate grid regardless of mode
+            const savedMode = colorMode;
+            colorMode = 'bivariate';
+            cell.style.background = getBivariateColor(bi / (N - 1), ni / (N - 1));
+            colorMode = savedMode;
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function getSurfaceColor(intensityNormal) {
+    return '#2e4b7e';
 }
 
 Promise.all([
@@ -590,6 +650,15 @@ Promise.all([
     
     // Explicit initialization to paint the floor plan colors natively on mount
     updateAllMaps();
+    drawBivariateGrid();
+
+    // Radio button listeners for color mode
+    document.querySelectorAll('input[name="color-mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            colorMode = this.value;
+            updateAllMaps();
+        });
+    });
     
 }).catch(error => {
     console.error("Error loading data:", error);
