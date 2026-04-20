@@ -68,6 +68,8 @@ let currentMapData = [];
 let currentTime = "4/7/2026 12:00";
 let currentSliderValue = 12;
 let currentFloor = 1;
+let isWaveVisible = true;
+let appMode = 'explore'; // 'explore' or 'seat-selector'
 
 // Three.js Renderers Context
 const floorScenes = {}; 
@@ -392,7 +394,8 @@ function updateFloorDisplacement(floorNum, timeT = 0) {
 
         // Anchor the label 40 units above the 3D surface grid (which itself is at Z=120)
         // We add the surfaceMesh.position.z (120) to keep it in sync with the visual topological layer.
-        mesh.userData.nameLabel.position.z = Math.min(peakZ, 800) + 40 + 120;
+        // If 3D topography is hidden, drop the labels near the floor level.
+        mesh.userData.nameLabel.position.z = isWaveVisible ? (Math.min(peakZ, 800) + 40 + 120) : 40;
     });
 }
 
@@ -403,6 +406,14 @@ function updateAllMaps() {
     const legendGoldEnd = d3.interpolateRgb("#B3A369", "#003057")(t);
     const legendMid = d3.interpolateRgb("#FFCC00", "#b1c3d6")(t);
     document.getElementById('dynamic-legend-bar').style.background = `linear-gradient(to right, #f8fafc, ${legendMid}, ${legendGoldEnd})`;
+    
+    // Update busyness bar dynamically
+    const topoColor = getSurfaceColor(1.0, t);
+    const busynessBar = document.getElementById('dynamic-busyness-bar');
+    if (busynessBar) {
+        busynessBar.style.background = `linear-gradient(to right, #f8fafc, ${topoColor})`;
+    }
+
     // Update thumb color dynamically
     document.documentElement.style.setProperty('--slider-thumb-color', legendGoldEnd);
 
@@ -413,6 +424,7 @@ function updateAllMaps() {
         // Dynamically scale surface opacity based on time to keep evening views light and legible
         // Day (Gold) = 0.9 opacity | Night (Navy) = 0.5 opacity
         ctx.surfaceMesh.material.opacity = d3.interpolateNumber(0.9, 0.5)(t);
+        ctx.surfaceMesh.visible = isWaveVisible;
         
         const timeData = currentMapData.filter(d => d['Date Time'] === currentTime);
         
@@ -429,7 +441,35 @@ function updateAllMaps() {
                 // meaningful color changes even in the middle of the standard decibel range.
                 const intensity = Math.max(0, Math.min(1, (noise - 45) / 27));
                 mesh.material.color.set(getChoroplethColor(intensity, t));
-                mesh.userData.baseOpacity = 0.85;
+                
+                // Seat Selector Filtering
+                let isMatch = true;
+                if (appMode === 'seat-selector') {
+                    const activity = document.getElementById('filter-activity').value;
+                    const noisePref = document.getElementById('filter-noise').value;
+                    const groupSize = document.getElementById('filter-group-size').value;
+                    
+                    const numStudying = +rm.csvData['Num studying'];
+                    const numEating = +rm.csvData['Num eating'];
+                    const numTalking = +rm.csvData['Num talking'];
+                    const numStudents = +rm.csvData['Total num students'];
+                    
+                    // Filter: Activity
+                    if (activity === 'studying' && numStudying < 2) isMatch = false;
+                    if (activity === 'eating' && numEating < 2) isMatch = false;
+                    if (activity === 'talking' && numTalking < 2) isMatch = false;
+                    
+                    // Filter: Noise
+                    if (noisePref === 'quiet' && noise > 55) isMatch = false;
+                    if (noisePref === 'moderate' && (noise < 50 || noise > 65)) isMatch = false;
+                    if (noisePref === 'loud' && noise < 65) isMatch = false;
+                    
+                    // Filter: Group Size (avoid areas that are already too crowded for a large group)
+                    if (groupSize === 'medium' && numStudents > 25) isMatch = false;
+                    if (groupSize === 'large' && numStudents > 15) isMatch = false;
+                }
+                
+                mesh.userData.baseOpacity = isMatch ? 0.85 : 0.05;
                 mesh.material.opacity = mesh.userData.baseOpacity; 
                 mesh.material.visible = true;
                 mesh.material.depthTest = false; 
@@ -475,11 +515,53 @@ function onSliderChange(val) {
     updateAllMaps();
 }
 
+document.getElementById('toggle-3d-wave').addEventListener('change', function(e) {
+    isWaveVisible = e.target.checked;
+    updateAllMaps();
+});
+
+window.setMode = function(mode) {
+    appMode = mode;
+    
+    // UI Updates
+    document.getElementById('btn-explore').classList.toggle('active', mode === 'explore');
+    document.getElementById('btn-seat-selector').classList.toggle('active', mode === 'seat-selector');
+    
+    const toggleContainer = document.getElementById('mode-toggle');
+    if (mode === 'seat-selector') {
+        toggleContainer.classList.add('seat-selector-active');
+        document.getElementById('seat-selector-panel').style.display = 'block';
+    } else {
+        toggleContainer.classList.remove('seat-selector-active');
+        document.getElementById('seat-selector-panel').style.display = 'none';
+    }
+    
+    // Trigger map update
+    updateAllMaps();
+    
+    // Handle resizing of the WebGL canvas since flex layout changes width
+    setTimeout(() => {
+        Object.values(floorScenes).forEach(ctx => {
+            if (ctx.container && ctx.renderer) {
+                const width = ctx.container.clientWidth - 20;
+                const height = ctx.container.clientHeight - 20;
+                ctx.renderer.setSize(width, height);
+                ctx.camera.aspect = width / height;
+                ctx.camera.updateProjectionMatrix();
+            }
+        });
+    }, 350);
+};
+
+window.updateFilters = function() {
+    updateAllMaps();
+};
+
 function getSurfaceColor(intensityNormal, timeT) {
     // UNIFORM COLOR MODE: Surface color is based only on global time blending.
-    const goldBase = "#D4C491"; 
-    const navyBase = "#A3BFD9"; // Lightened for better transparency feel
-    return d3.interpolateRgb(goldBase, navyBase)(timeT);
+    const dayColor = "#B3A369";
+    const eveningColor = "#003057"; 
+    return d3.interpolateRgb(dayColor, eveningColor)(timeT);
 }
 
 function getChoroplethColor(intensity, timeT) {

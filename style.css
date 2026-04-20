@@ -347,3 +347,130 @@ svg {
     color: #003057;
     font-weight: 600;
 }
+
+/* Layout Modes */
+.mode-toggle-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.mode-toggle {
+    display: flex;
+    position: relative;
+    background: #e2e8f0;
+    border-radius: 20px;
+    padding: 4px;
+}
+
+.mode-toggle-pill {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 1;
+}
+
+.mode-toggle.seat-selector-active .mode-toggle-pill {
+    transform: translateX(100%);
+}
+
+.mode-btn {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    border: none;
+    padding: 8px 24px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    border-radius: 16px;
+    width: 120px;
+}
+
+.mode-btn.active {
+    color: #003057;
+}
+
+.main-layout {
+    display: flex;
+    width: 100%;
+    max-width: 1400px;
+    gap: 2rem;
+    transition: all 0.3s ease;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.seat-selector-panel {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    padding: 1.5rem;
+    flex-shrink: 0;
+    animation: slideInLeft 0.4s ease;
+    height: fit-content;
+    box-sizing: border-box;
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.seat-selector-panel h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.15rem;
+    color: #003057;
+    font-weight: 700;
+}
+
+.filter-group {
+    margin-bottom: 1.25rem;
+}
+
+.filter-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #334155;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.filter-group select:focus {
+    border-color: #B3A369;
+}
+
+.right-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    transition: max-width 0.3s ease;
+}

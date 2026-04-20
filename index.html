@@ -17,20 +17,67 @@
 </head>
 <body>
     <div class="header">
-        <h1>Student Activity throughout the day at the Georgia Tech Student Center</h1>
-        <p>The height of the topological surface represents student crowdedness at each location.</p>
+        <h1>Find your spot in the Student Center!</h1>
+        <p>Explore the rhythms of campus life and discover the perfect spot for your needs.</p>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle-container">
+        <div class="mode-toggle" id="mode-toggle">
+            <div class="mode-toggle-pill"></div>
+            <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
+            <button class="mode-btn" id="btn-seat-selector" onclick="setMode('seat-selector')">Seat Selector</button>
+        </div>
+    </div>
+
+    <div class="main-layout" id="main-layout">
+        <!-- Seat Selector Side Panel -->
+        <div class="seat-selector-panel" id="seat-selector-panel" style="display: none;">
+            <h3>What are you looking for?</h3>
+            <div class="filter-group">
+                <label>Primary Activity</label>
+                <select id="filter-activity" onchange="updateFilters()">
+                    <option value="any">Any Activity</option>
+                    <option value="studying">Studying</option>
+                    <option value="eating">Eating</option>
+                    <option value="talking">Talking / Socializing</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Noise Preference</label>
+                <select id="filter-noise" onchange="updateFilters()">
+                    <option value="any">Any Noise Level</option>
+                    <option value="quiet">Quiet (Focus)</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="loud">Loud / Energetic</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Group Size</label>
+                <select id="filter-group-size" onchange="updateFilters()">
+                    <option value="any">Any Size</option>
+                    <option value="small">Just me (1-2)</option>
+                    <option value="medium">Small group (3-5)</option>
+                    <option value="large">Large group (6+)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="right-content" style="width: 100%;">
+
+    <div class="controls-container" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem;">
+        <div class="floor-tabs" style="margin-bottom: 0; border-bottom: none;">
+            <button id="tab-floor1" class="tab-button active" onclick="showFloor(1)">Floor 1</button>
+            <button id="tab-floor2" class="tab-button" onclick="showFloor(2)">Floor 2</button>
+            <button id="tab-floor3" class="tab-button" onclick="showFloor(3)">Floor 3</button>
+        </div>
+
         <div class="time-slider-container">
             <span id="slider-time-label">12:00 PM</span>
             <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="1" value="12" oninput="onSliderChange(this.value)">
         </div>
     </div>
     
-    <div class="floor-tabs">
-        <button id="tab-floor1" class="tab-button active" onclick="showFloor(1)">Floor 1</button>
-        <button id="tab-floor2" class="tab-button" onclick="showFloor(2)">Floor 2</button>
-        <button id="tab-floor3" class="tab-button" onclick="showFloor(3)">Floor 3</button>
-    </div>
-
     <div class="floors-container">
         <!-- Floor 1 -->
         <div id="floor-section-1" class="floor-section active">
@@ -50,15 +97,30 @@
             <div id="map-container-3" class="map-container"></div>
         </div>
     </div>
+        </div> <!-- End right-content -->
+    </div> <!-- End main-layout -->
+    
     <!-- TIME SERIES LEGEND UI -->
     <div class="bivariate-legend" style="width: 250px;">
+        <span class="legend-title">Busyness Topography</span>
+        <div class="legend-subtitle">Student crowdedness scale</div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color:#475569; font-weight:600; margin-bottom: 4px;">
+            <span>Empty</span>
+            <span>Crowded</span>
+        </div>
+        <div id="dynamic-busyness-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #D4C491); border: 1px solid rgba(0,0,0,0.1); margin-bottom: 16px;"></div>
+
         <span class="legend-title">Noise Choropleth</span>
         <div class="legend-subtitle">Decibel intensity scale</div>
         <div style="display: flex; justify-content: space-between; font-size: 11px; color:#475569; font-weight:600; margin-bottom: 4px;">
             <span>Quiet</span>
             <span>Loud</span>
         </div>
-    <div id="dynamic-legend-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #FFCC00, #B3A369); border: 1px solid rgba(0,0,0,0.1);"></div>
+        <div id="dynamic-legend-bar" style="height: 12px; border-radius: 6px; background: linear-gradient(to right, #ffffff, #FFCC00, #B3A369); border: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px;"></div>
+        <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 8px;">
+            <input type="checkbox" id="toggle-3d-wave" checked style="margin-right: 6px; cursor: pointer;">
+            Show 3D Topography
+        </label>
     </div>
 
     <!-- INSTRUCTIONS LEGEND -->
