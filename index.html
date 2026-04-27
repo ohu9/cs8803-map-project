@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,190 +16,334 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
-<body>
-    <div class="header">
-        <h1>Activity Levels in the Georgia Tech Student Center</h1>
-        <p>Explore the rhythms of campus life and discover the perfect spot for your needs.</p>
-    </div>
 
-    <!-- Mode Toggle -->
-    <div class="mode-toggle-container">
-        <div class="mode-toggle" id="mode-toggle">
-            <div class="mode-toggle-pill"></div>
-            <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
-            <button class="mode-btn" id="btn-seat-selector" onclick="setMode('seat-selector')">Seat Selector</button>
+<body>
+    <div class="header" style="padding: 10px 24px 0; margin-bottom: 0;">
+        <h1 style="font-size: 1.3rem; margin-bottom: 4px; text-align: center;">Activity Levels in the Georgia Tech
+            Student Center</h1>
+        <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 12px 0; text-align: center;">A data-driven
+            visualization of campus density, noise, and activity to help you find your ideal environment.</p>
+
+        <!-- ROW 1: App Modes (Primary Navigation) -->
+        <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+            <div class="mode-toggle" id="mode-toggle" style="margin-bottom: 0;">
+                <div class="mode-toggle-pill"></div>
+                <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
+                <button class="mode-btn" id="btn-seat-selector" onclick="setMode('seat-selector')">Area
+                    Selector</button>
+                <button class="mode-btn" id="btn-analytics" onclick="setMode('analytics')">Floor Snapshot</button>
+            </div>
+        </div>
+
+        <!-- ROW 2: Context Controls (Where & When) -->
+        <div class="nav-bar"
+            style="display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding-bottom: 10px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <div class="floor-tabs"
+                style="margin-bottom: 0; border-bottom: none; background: #f1f5f9; padding: 4px; border-radius: 12px;">
+                <button id="tab-floor1" class="tab-button active" onclick="showFloor(1)"
+                    style="padding: 6px 16px; font-size: 0.8rem;">Floor 1</button>
+                <button id="tab-floor2" class="tab-button" onclick="showFloor(2)"
+                    style="padding: 6px 16px; font-size: 0.8rem;">Floor 2</button>
+                <button id="tab-floor3" class="tab-button" onclick="showFloor(3)"
+                    style="padding: 6px 16px; font-size: 0.8rem;">Floor 3</button>
+            </div>
+
+            <div class="time-slider-container" style="margin-top: 0; min-width: 320px;">
+                <span id="slider-time-label" style="font-size: 0.85rem; font-weight: 700;">12:00 PM</span>
+                <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="2" value="12"
+                    oninput="onSliderChange(this.value)">
+            </div>
         </div>
     </div>
 
     <div class="main-layout" id="main-layout">
-        <!-- Seat Selector Side Panel -->
-        <div class="seat-selector-panel" id="seat-selector-panel" style="display: none;">
-            <h3>What are you looking for?</h3>
-            <div class="filter-group">
-                <label>Primary Activity</label>
-                <select id="filter-activity" onchange="updateFilters()">
-                    <option value="any">Any Activity</option>
-                    <option value="studying">Studying</option>
-                    <option value="eating">Eating</option>
-                    <option value="talking">Talking / Socializing</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Noise Preference</label>
-                <select id="filter-noise" onchange="updateFilters()">
-                    <option value="any">Any Noise Level</option>
-                    <option value="quiet">Quiet (Focus)</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="loud">Loud / Energetic</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Group Size</label>
-                <select id="filter-group-size" onchange="updateFilters()">
-                    <option value="any">Any Size</option>
-                    <option value="small">Just me (1-2)</option>
-                    <option value="medium">Small group (3-5)</option>
-                    <option value="large">Large group (6+)</option>
-                </select>
-            </div>
-        </div>
+
 
         <div class="right-content" style="width: 100%;">
 
-    <div class="controls-container" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-top: 1rem; margin-bottom: 2rem;">
-        <div class="floor-tabs" style="margin-bottom: 0; border-bottom: none;">
-            <button id="tab-floor1" class="tab-button active" onclick="showFloor(1)">Floor 1</button>
-            <button id="tab-floor2" class="tab-button" onclick="showFloor(2)">Floor 2</button>
-            <button id="tab-floor3" class="tab-button" onclick="showFloor(3)">Floor 3</button>
-        </div>
+            <div class="right-content" style="width: 100%; padding-top: 0;">
 
-        <div class="time-slider-container">
-            <span id="slider-time-label">12:00 PM</span>
-            <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="2" value="12" oninput="onSliderChange(this.value)">
-        </div>
-    </div>
-    
-    <div style="display: flex; align-items: stretch; gap: 1rem; width: 100%;">
+                <div style="display: flex; align-items: stretch; gap: 1rem; width: 100%;">
 
-        <!-- CHOROPLETH LEGEND (inline, same height as map) -->
-        <div class="bivariate-legend" style="width: 220px; flex-shrink: 0; height: 620px; overflow-y: auto; position: static; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
-            <span class="legend-title">Floor Color Scale</span>
-            <div class="legend-subtitle">Noise (gold) × Crowdedness (blue)</div>
+                    <!-- Area Selector Side Panel (Matches legend position) -->
+                    <div class="seat-selector-panel" id="seat-selector-panel"
+                        style="display: none; width: 220px; flex-shrink: 0; position: static; box-shadow: 0 4px 20px rgba(0,0,0,0.06); height: 620px; overflow-y: auto; background: white; border-radius: 8px; padding: 16px; box-sizing: border-box;">
+                        <h3
+                            style="color: #003057; font-size: 1.1rem; margin-bottom: 1.5rem; border-bottom: 2px solid #B3A369; padding-bottom: 0.5rem;">
+                            What are you looking for?</h3>
 
-            <!-- 2D Bivariate Grid -->
-            <div style="display: flex; align-items: flex-start; gap: 4px; margin: 12px 0 4px;">
-                <!-- "Noise" axis label (rotated) -->
-                <div style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; height: 80px; display: flex; align-items: center; justify-content: center;">Noise</div>
-                <!-- Y-axis: Loud/Quiet pinned to top/bottom of grid -->
-                <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 80px;">
-                    <span style="font-size: 9px; font-weight: 700; color: #B3A369; line-height: 1;">Loud</span>
-                    <span style="font-size: 9px; font-weight: 700; color: #aaa; line-height: 1;">Quiet</span>
-                </div>
-                <!-- Grid + X-axis labels -->
-                <div>
-                    <div id="bivariate-grid" style="display: grid; grid-template-columns: repeat(4, 20px); grid-template-rows: repeat(4, 20px); gap: 0; margin-bottom: 4px;"></div>
-                    <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; width: 80px;">
-                        <span style="color: #aaa;">Empty</span>
-                        <span style="color: #2e4b7e;">Crowded</span>
+                        <div class="filter-group">
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Time
+                                of Day</label>
+                            <select id="filter-time"
+                                style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px;">
+                                <option value="12">12:00 PM</option>
+                                <option value="14">2:00 PM</option>
+                                <option value="16">4:00 PM</option>
+                                <option value="18">6:00 PM</option>
+                                <option value="20">8:00 PM</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group" style="margin-top: 1rem;">
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Noise
+                                Level</label>
+                            <select id="filter-noise-pref"
+                                style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px;">
+                                <option value="quiet">Quiet (Focus)</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="loud">Loud (Social)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group" style="margin-top: 1rem;">
+                            <label
+                                style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Crowdedness</label>
+                            <select id="filter-crowd-pref"
+                                style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px;">
+                                <option value="empty">Empty / Low</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="crowded">Crowded / High</option>
+                            </select>
+                        </div>
+
+                        <button onclick="findBestAreas()"
+                            style="width: 100%; background: #003057; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; margin-top: 1.5rem; cursor: pointer; transition: background 0.2s;">
+                            Find Area
+                        </button>
+
+                        <div id="results-container" style="margin-top: 2rem;">
+                            <!-- Top 3 results will be injected here -->
+                        </div>
                     </div>
-                    <div style="text-align: center; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; width: 80px; margin-top: 3px;">Crowdedness</div>
-                </div>
-            </div>
 
-            <!-- Color Mode -->
-            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
-                <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Color Mode</div>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
-                    <input type="radio" name="color-mode" value="bivariate" id="mode-bivariate" checked style="cursor: pointer;"> Bivariate (default)
-                </label>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
-                    <input type="radio" name="color-mode" value="crowdedness" id="mode-crowdedness" style="cursor: pointer; accent-color: #2e4b7e;"> Crowdedness Only
-                </label>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
-                    <input type="radio" name="color-mode" value="noise" id="mode-noise" style="cursor: pointer; accent-color: #B3A369;"> Noise Only
-                </label>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
-                    <input type="radio" name="color-mode" value="none" id="mode-none" style="cursor: pointer; accent-color: #fff;"> None
-                </label>
-            </div>
+                    <!-- CHOROPLETH LEGEND (inline, same height as map) -->
+                    <div class="bivariate-legend"
+                        style="width: 220px; flex-shrink: 0; height: 620px; overflow-y: auto; position: static; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+                        <span class="legend-title">Floor Color Scale</span>
+                        <div class="legend-subtitle">Noise (gold) × Crowdedness (blue)</div>
 
-            <!-- Topography Wave Toggles -->
-            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
-                <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Topography Waves</div>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
-                    <input type="checkbox" id="toggle-crowdedness-wave" style="accent-color: #2e4b7e; cursor: pointer;"> Show Crowdedness Wave
-                </label>
-                <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
-                    <input type="checkbox" id="toggle-noise-wave" style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
-                </label>
-            </div>
+                        <!-- 2D Bivariate Grid -->
+                        <div style="display: flex; align-items: flex-start; gap: 4px; margin: 12px 0 4px;">
+                            <!-- "Noise" axis label (rotated) -->
+                            <div
+                                style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                Noise</div>
+                            <!-- Y-axis: Loud/Quiet pinned to top/bottom of grid -->
+                            <div
+                                style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 80px;">
+                                <span
+                                    style="font-size: 9px; font-weight: 700; color: #B3A369; line-height: 1;">Loud</span>
+                                <span
+                                    style="font-size: 9px; font-weight: 700; color: #aaa; line-height: 1;">Quiet</span>
+                            </div>
+                            <!-- Grid + X-axis labels -->
+                            <div>
+                                <div id="bivariate-grid"
+                                    style="display: grid; grid-template-columns: repeat(4, 20px); grid-template-rows: repeat(4, 20px); gap: 0; margin-bottom: 4px;">
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; width: 80px;">
+                                    <span style="color: #aaa;">Empty</span>
+                                    <span style="color: #2e4b7e;">Crowded</span>
+                                </div>
+                                <div
+                                    style="text-align: center; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; width: 80px; margin-top: 3px;">
+                                    Crowdedness</div>
+                            </div>
+                        </div>
 
-            <!-- Activity Composition Legend -->
-            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px;">
-                <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 6px;">Activity Composition</div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
-                        <div style="width: 10px; height: 10px; border-radius: 100%; background: #3B82F6;"></div>
-                        <span>Studying (Focus)</span>
+                        <!-- Color Mode -->
+                        <div
+                            style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Color
+                                Mode
+                            </div>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                                <input type="radio" name="color-mode" value="bivariate" id="mode-bivariate" checked
+                                    style="cursor: pointer;"> Bivariate (default)
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                                <input type="radio" name="color-mode" value="crowdedness" id="mode-crowdedness"
+                                    style="cursor: pointer; accent-color: #2e4b7e;"> Crowdedness Only
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                                <input type="radio" name="color-mode" value="noise" id="mode-noise"
+                                    style="cursor: pointer; accent-color: #B3A369;"> Noise Only
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
+                                <input type="radio" name="color-mode" value="none" id="mode-none"
+                                    style="cursor: pointer; accent-color: #fff;"> None
+                            </label>
+                        </div>
+
+                        <!-- Topography Wave Toggles -->
+                        <div
+                            style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">
+                                Topography
+                                Waves</div>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
+                                <input type="checkbox" id="toggle-crowdedness-wave"
+                                    style="accent-color: #2e4b7e; cursor: pointer;"> Show Crowdedness Wave
+                            </label>
+                            <label
+                                style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
+                                <input type="checkbox" id="toggle-noise-wave"
+                                    style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
+                            </label>
+                        </div>
+
+                        <!-- Activity Composition Legend -->
+                        <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 6px;">Activity
+                                Composition</div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <div
+                                    style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
+                                    <div style="width: 10px; height: 10px; border-radius: 100%; background: #3B82F6;">
+                                    </div>
+                                    <span>Studying (Focus)</span>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
+                                    <div style="width: 10px; height: 10px; border-radius: 100%; background: #F59E0B;">
+                                    </div>
+                                    <span>Talking (Social)</span>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
+                                    <div style="width: 10px; height: 10px; border-radius: 100%; background: #10B981;">
+                                    </div>
+                                    <span>Eating (Dining)</span>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
+                                    <div style="width: 10px; height: 10px; border-radius: 100%; background: #8B5CF6;">
+                                    </div>
+                                    <span>On Phone (Digital)</span>
+                                </div>
+                                <div style="font-size: 9px; font-style: italic; color: #94a3b8; margin-top: 4px;">Zoom
+                                    out
+                                    to see dominant activity</div>
+                            </div>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
-                        <div style="width: 10px; height: 10px; border-radius: 100%; background: #F59E0B;"></div>
-                        <span>Talking (Social)</span>
+
+                    <!-- Map floors -->
+                    <div class="floors-container" style="flex-grow: 1;">
+                        <!-- Floor 1 -->
+                        <div id="floor-section-1" class="floor-section active">
+                            <h2>Floor 1</h2>
+                            <div id="map-container-1" class="map-container"></div>
+                        </div>
+
+                        <!-- Floor 2 -->
+                        <div id="floor-section-2" class="floor-section">
+                            <h2>Floor 2</h2>
+                            <div id="map-container-2" class="map-container"></div>
+                        </div>
+
+                        <!-- Floor 3 -->
+                        <div id="floor-section-3" class="floor-section">
+                            <h2>Floor 3</h2>
+                            <div id="map-container-3" class="map-container"></div>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
-                        <div style="width: 10px; height: 10px; border-radius: 100%; background: #10B981;"></div>
-                        <span>Eating (Dining)</span>
+
+                    <!-- Analytics Section (charts) -->
+                    <div id="analytics-view" style="display: none; flex-grow: 1; padding: 10px 20px;">
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 1rem;">
+                            <h2 style="margin-top: 0; color: #003057; font-size: 1.1rem;">Floor-Level Trends</h2>
+                            <p style="color: #64748b; font-size: 0.8rem; margin-bottom: 8px;">Comparing average noise
+                                and crowdedness across all three floors.</p>
+
+                            <!-- Trend Legend -->
+                            <div
+                                style="display: flex; gap: 16px; margin-bottom: 12px; font-size: 10px; font-weight: 600;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #B3A369; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">Avg Noise (dBA)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #003057; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">Avg Crowdedness (Students)</span>
+                                </div>
+                            </div>
+
+                            <div id="chart-trends" style="width: 100%; height: 220px;"></div>
+                        </div>
+
+                        <div
+                            style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                            <h2 style="margin-top: 0; color: #003057; font-size: 1.1rem;">Activity Distribution</h2>
+                            <p style="color: #64748b; font-size: 0.8rem; margin-bottom: 8px;">Total student activity
+                                types aggregated per floor.</p>
+
+                            <!-- Activity Legend -->
+                            <div
+                                style="display: flex; gap: 16px; margin-bottom: 12px; font-size: 10px; font-weight: 600; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #3B82F6; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">Studying</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #F59E0B; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">Talking</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #10B981; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">Eating</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 10px; height: 10px; background: #8B5CF6; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #475569;">On Phone</span>
+                                </div>
+                            </div>
+
+                            <div id="chart-activities" style="width: 100%; height: 220px;"></div>
+                        </div>
                     </div>
-                    <div style="font-size: 9px; font-style: italic; color: #94a3b8; margin-top: 4px;">Zoom out to see dominant activity</div>
-                </div>
+
+                </div> <!-- End flex row: legend + map -->
+            </div> <!-- End right-content -->
+        </div> <!-- End main-layout -->
+
+
+
+        <!-- INSTRUCTIONS LEGEND -->
+        <div class="instructions-panel">
+            <span class="legend-title">Interaction Guide</span>
+            <div class="instruction-item">
+                <span><b>Left Click + Drag:</b> Orbit/Rotate View</span>
+            </div>
+            <div class="instruction-item">
+                <span><b>Right Click + Drag:</b> Translate/Pan View</span>
+            </div>
+            <div class="instruction-item">
+                <span><b>Scroll:</b> Zoom In/Out</span>
+            </div>
+            <div class="instruction-item">
+                <span><b>Hover:</b> View Area Details</span>
             </div>
         </div>
 
-        <!-- Map floors -->
-        <div class="floors-container" style="flex-grow: 1;">
-            <!-- Floor 1 -->
-            <div id="floor-section-1" class="floor-section active">
-                <h2>Floor 1</h2>
-                <div id="map-container-1" class="map-container"></div>
-            </div>
-
-            <!-- Floor 2 -->
-            <div id="floor-section-2" class="floor-section">
-                <h2>Floor 2</h2>
-                <div id="map-container-2" class="map-container"></div>
-            </div>
-
-            <!-- Floor 3 -->
-            <div id="floor-section-3" class="floor-section">
-                <h2>Floor 3</h2>
-                <div id="map-container-3" class="map-container"></div>
-            </div>
-        </div>
-
-    </div> <!-- End flex row: legend + map -->
-        </div> <!-- End right-content -->
-    </div> <!-- End main-layout -->
-    
-
-
-    <!-- INSTRUCTIONS LEGEND -->
-    <div class="instructions-panel">
-        <span class="legend-title">Interaction Guide</span>
-        <div class="instruction-item">
-            <span><b>Left Click + Drag:</b> Orbit/Rotate View</span>
-        </div>
-        <div class="instruction-item">
-            <span><b>Right Click + Drag:</b> Translate/Pan View</span>
-        </div>
-        <div class="instruction-item">
-            <span><b>Scroll:</b> Zoom In/Out</span>
-        </div>
-        <div class="instruction-item">
-            <span><b>Hover:</b> View Area Details</span>
-        </div>
-    </div>
-
-    <!-- MAIN LOGIC -->
-    <script src="main.js"></script>
+        <!-- MAIN LOGIC -->
+        <script src="main.js"></script>
 </body>
+
 </html>
