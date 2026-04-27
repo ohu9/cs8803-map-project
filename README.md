@@ -1,70 +1,69 @@
-# CS8803 Map Project: Student Activity Visualization
+# Georgia Tech Student Center: Activity & Analytics Dashboard
 
-A high-fidelity 3D visualization of student activity at the Georgia Tech Student Center. This project uses topological surfaces to represent student crowdedness and choropleth mapping to visualize noise levels across different floors and times of day.
+A high-fidelity 3D visualization and decision-support tool for student activity at the Georgia Tech Student Center. This project leverages real-world observational data to help students find their ideal study environment through spatial mapping, personalized recommendations, and floor-level analytics.
+
+## Key Features
+
+### 1. Interactive 3D Mapping (Explore Mode)
+*   **Topological Heatmaps**: Architectural "spikes" represent real-time student density (crowdedness) across 26 different areas.
+*   **Bivariate Visualization**: A custom color scale simultaneously maps **Noise Levels (Gold)** and **Crowdedness (Blue)**, allowing users to identify "Quiet but Busy" or "Loud but Empty" spots at a glance.
+*   **Dynamic Tooltips**: Hover over any area to see live student counts, decibel levels, and activity breakdowns (Studying, Talking, Eating, and Digital usage).
+
+### 2. Area Selector (Recommendation Engine)
+*   **Personalized Search**: Input your desired time of day, noise preference (Quiet, Moderate, Loud), and crowdedness (Empty, Moderate, Crowded).
+*   **Scoring Algorithm**: A data-driven engine ranks every area in the building and returns the **Top 3 Best Matches** for your specific needs.
+*   **Instant Navigation**: Clicking a recommendation automatically centers the 3D map, highlights the room, and synchronizes the global time slider.
+
+### 3. Floor Snapshot (Analytics Tab)
+*   **Building-Wide Trends**: Comparative horizontal bar charts (powered by **D3.js**) showing average noise and density across all three floors simultaneously.
+*   **Activity Distribution**: Aggregated breakdowns of student behavior per floor, helping identify which floors are best for social activities versus focused study.
+
+---
 
 ## Quick Start
 
-Since the project fetches local data files, it must be served via a web server to avoid CORS issues.
+### Prerequisites
+Since the project fetches local data files (CSV/JSON), it must be served via a web server to avoid CORS issues.
 
-### Using Node.js (Recommended)
+### Run Locally (Node.js)
 ```bash
 npx serve .
 ```
 
-### Using Python
+### Run Locally (Python)
 ```bash
 python3 -m http.server
 ```
-
-Once started, open the provided URL (e.g., `http://localhost:3000`) in your browser.
+Once started, open `http://localhost:3000` in your browser.
 
 ---
 
 ## File Structure
 
-### Core Logic & UI
-- **index.html**: The entry point of the application. Defines the UI structure, including floor tabs, the time slider, and the interaction legends.
-- **main.js**: The core engine. Handles Three.js 3D rendering, D3.js data parsing, topological surface displacement (spikes), and interactive tooltips.
-- **style.css**: Contains all layout and design styling, featuring a modern Georgia Tech-inspired theme (Navy and Gold).
+### Application Core
+- **index.html**: Hierarchical dashboard layout with consolidated navigation (Modes, Floors, and Time).
+- **main.js**: The central engine handling Three.js WebGL rendering, D3 data aggregation, recommendation scoring, and UI synchronization.
+- **style.css**: Modern Georgia Tech-inspired theme (Navy/Gold) with a compact, single-screen responsive design.
 
-### Data Files
-- **room.json**: Definition of room geometries, including coordinates, IDs, and labels for each floor.
-- **map_data.csv**: Time-series observational data including student counts, noise levels (dBA), and activity types.
-- **data.json**: Pre-processed JSON version of the activity data.
-
-### Assets
-- **public/**: Contains floor plan images (`floor1.png`, `floor2.png`, `floor3.png`) used as base textures for the 3D map.
-- **sc_background.webp**: High-resolution background image for the application UI.
+### Data & Assets
+- **Map Data Collection - Sheet1.csv**: Final source of truth for student activity observations.
+- **room.json**: Geometric coordinates and metadata for 3D room positioning.
+- **data/images/**: Real-world photos of every study area synchronized with the 3D tooltips.
+- **public/**: Textures and base floor plan images used for the 3D surface mapping.
 
 ---
 
-## Controls & Interaction
+## Technical Stack
+- **[Three.js](https://threejs.org/)**: 3D Graphics and topological displacement mapping.
+- **[D3.js](https://d3js.org/)**: Data parsing, color interpolation, and analytics charting.
+- **[Google Fonts (Inter)](https://fonts.google.com/specimen/Inter)**: Premium modern typography.
+- **[SheetJS (Integration Ready)](https://sheetjs.com/)**: Capabilities for handling complex Excel exports.
 
+---
+
+## Controls
 - **Left Click + Drag**: Orbit/Rotate the 3D view.
-- **Right Click + Drag**: Pan/Translate the camera.
-- **Scroll**: Zoom in and out.
-- **Hover**: Hover over a room or area peak to see detailed metrics (students, noise level, activities).
-- **Time Slider**: Adjust the time of day to see how crowdedness and noise levels evolve.
-- **Floor Tabs**: Switch between the different levels of the Student Center.
-
----
-
-## Technologies Used
-
-- **[Three.js](https://threejs.org/)**: 3D Graphics and WebGL rendering.
-- **[D3.js](https://d3js.org/)**: Data-driven document manipulation and color interpolation.
-- **[Inter Font](https://rsms.me/inter/)**: Clean, modern typography.
-
----
-
-## Deployment
-
-Since this is a static site, it can be hosted for free on **GitHub Pages**:
-
-1. **Commit and Push**: Ensure all files (including `index.html`, `main.js`, `style.css`, and the `public/` folder) are pushed to your GitHub repository.
-2. **Enable Hosting**:
-    - Go to your repository on GitHub.
-    - Navigate to **Settings > Pages**.
-    - Set the **Branch** to `main` and the folder to `/(root)`.
-    - Click **Save**.
-3. **Important Note**: Ensure your filenames are case-sensitive (e.g., `public/floor1.png` must match exactly in the code) as GitHub Pages is a case-sensitive environment.
+- **Right Click + Drag**: Pan the camera.
+- **Scroll**: Zoom in/out.
+- **Mode Toggles**: Switch between Explore (Map), Area Selector (Search), and Floor Snapshot (Charts).
+- **Time Slider**: View data across 5 distinct time slots (12:00 PM to 8:00 PM).
