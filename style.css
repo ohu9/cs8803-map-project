@@ -11,6 +11,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 1.5rem 1rem;
+    transition: background-color 0.8s ease;
 }
 
 .header {
@@ -45,14 +46,15 @@ p {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     margin: 0 auto;
     width: 280px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 #slider-time-label {
-    font-size: 1.25rem;
+    font-size: 2.25rem;
     font-weight: 800;
-    color: #003057;
-    letter-spacing: -0.02em;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.025em;
 }
 
 .time-slider {
@@ -152,7 +154,7 @@ p {
 .map-container {
     width: 100%;
     height: 620px;
-    background-color: #ffffff;
+    background-color: transparent;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
     position: relative;
@@ -207,7 +209,7 @@ p {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     text-align: center;
-    color: #475569;
+    color: #94a3b8;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -473,4 +475,13 @@ svg {
     align-items: center;
     max-width: 100%;
     transition: max-width 0.3s ease;
+}
+
+.tooltip {
+    max-width: 320px !important;
+    min-width: 220px;
+}
+
+.tooltip audio::-webkit-media-controls-panel {
+    background-color: #f1f5f9;
 }

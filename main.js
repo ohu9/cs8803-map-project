@@ -33,13 +33,15 @@ function createLabelSprite(text, fontSize = 24, color = "#003057", isBold = true
     const spriteMaterial = new THREE.SpriteMaterial({ 
         map: texture, 
         transparent: true,
-        depthTest: false // Ensure labels are always strictly visible on top
+        depthTest: false,
+        sizeAttenuation: false // Fixed size in screen space
     });
     const sprite = new THREE.Sprite(spriteMaterial);
     
-    // Scale sprite relative to its text aspect ratio
-    const scaleFactor = canvas.width / canvas.height;
-    sprite.scale.set(scaleFactor * fontSize * 1.5, fontSize * 1.5, 1);
+    // Scale sprite to a constant screen-relative size
+    const aspect = canvas.width / canvas.height;
+    const baseH = 0.032; // Reduced from 0.045 to be less distracting
+    sprite.scale.set(aspect * baseH, baseH, 1);
     
     return sprite;
 }
@@ -68,10 +70,47 @@ let currentMapData = [];
 let currentTime = "4/7/2026 12:00";
 let currentSliderValue = 12;
 let currentFloor = 1;
-let isBusynessVisible = false;
+let isTooltipLocked = false;
+let lockedObject = null;
+
+function getTooltipHTML(d) {
+    const hour = currentSliderValue > 12 ? currentSliderValue - 12 : currentSliderValue;
+    const mediaName = `${hour}-${d.id}`;
+    
+    let content = `<strong style="color: #003057; font-size: 15px; text-transform: uppercase;">${d.name}</strong><br/>
+        <span style="color: #666666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Area ${d.id} | Floor ${d.floor}</span><br/>
+        <hr style="border:none; border-top:1px solid #e0e0e0; margin: 8px 0;">`;
+    
+    if (d.csvData) {
+        content += `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-bottom: 8px;">
+            <span style="color: #333333"><b>Students:</b> <strong style="color: #003057">${d.csvData['Total num students']}</strong></span>
+            <span style="color: #333333"><b>Noise:</b> <strong style="color: #B3A369">${d.csvData['Decibel level (dBA)']} dBA</strong></span>
+        </div>
+        <div style="font-size: 11px; color: #555555; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; margin-bottom: 8px;">
+            ${d.csvData['Num studying']} studying &middot; ${d.csvData['Num eating']} eating &middot; ${d.csvData['Num talking']} talking
+        </div>`;
+    }
+
+    // Add Image
+    content += `<div style="margin-bottom: 10px;">
+        <img src="data/images/${mediaName}.jpeg" style="width: 100%; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+    </div>`;
+
+    // Add Audio
+    content += `<div>
+        <audio controls style="width: 100%; height: 35px;">
+            <source src="data/m4a/${mediaName}.m4a" type="audio/mp4">
+            Your browser does not support the audio element.
+        </audio>
+    </div>`;
+
+    return content;
+}
+let isCrowdednessVisible = false;
 let isNoiseWaveVisible = false;
 let appMode = 'explore';
-let colorMode = 'bivariate'; // 'bivariate' | 'busyness' | 'noise'
+let colorMode = 'bivariate'; // 'bivariate' | 'crowdedness' | 'noise'
 
 const ACTIVITY_COLORS = {
     studying: '#3B82F6',
@@ -146,21 +185,21 @@ function initFloorMap(containerId, floorNum, roomData) {
     flatFloorMesh.renderOrder = 1; // Base layer
     scene.add(flatFloorMesh);
 
-    // BUSYNESS TOPOGRAPHY (Blue wireframe — Total num students → height)
-    const busynessPlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
-    const busynessColors = [];
-    for (let i = 0; i < busynessPlaneGeo.attributes.position.count; i++) {
-        busynessColors.push(0.23, 0.51, 0.96); // #284d89ff blue
+    // CROWDEDNESS TOPOGRAPHY (Blue wireframe — Total num students → height)
+    const crowdednessPlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
+    const crowdednessColors = [];
+    for (let i = 0; i < crowdednessPlaneGeo.attributes.position.count; i++) {
+        crowdednessColors.push(0.23, 0.51, 0.96); // #284d89ff blue
     }
-    busynessPlaneGeo.setAttribute('color', new THREE.Float32BufferAttribute(busynessColors, 3));
-    const busynessMat = new THREE.MeshPhongMaterial({
+    crowdednessPlaneGeo.setAttribute('color', new THREE.Float32BufferAttribute(crowdednessColors, 3));
+    const crowdednessMat = new THREE.MeshPhongMaterial({
         vertexColors: true, transparent: true, opacity: 0.75,
         side: THREE.FrontSide, shininess: 90, wireframe: true
     });
-    const busynessMesh = new THREE.Mesh(busynessPlaneGeo, busynessMat);
-    busynessMesh.position.z = 30;
-    busynessMesh.renderOrder = 5; // Above map, below tiles
-    scene.add(busynessMesh);
+    const crowdednessMesh = new THREE.Mesh(crowdednessPlaneGeo, crowdednessMat);
+    crowdednessMesh.position.z = 30;
+    crowdednessMesh.renderOrder = 5; // Above map, below tiles
+    scene.add(crowdednessMesh);
 
     // NOISE TOPOGRAPHY (Gold wireframe — Decibel level → height)
     const noisePlaneGeo = new THREE.PlaneGeometry(1000, 1000, 150, 150);
@@ -199,8 +238,8 @@ function initFloorMap(containerId, floorNum, roomData) {
         boxMesh.position.set( posX, posY, 2 );
         boxMesh.userData = d; 
         
-        const nameLabel = createLabelSprite(d.name, 18, "#003057", false);
-        nameLabel.position.set(0, 0, 10); 
+        const nameLabel = createLabelSprite(d.name, 26, "#003057", true);
+        nameLabel.position.set(0, 0, 15); // Elevated above glyphs
         nameLabel.renderOrder = 110; 
         nameLabel.material.depthTest = false;
         boxMesh.add(nameLabel);
@@ -226,7 +265,7 @@ function initFloorMap(containerId, floorNum, roomData) {
         boxMesh.userData.rings = { study: ringStudy, talking: ringTalking, eating: ringEating };
 
         // Dominant Activity Dot - Explicit NormalBlending
-        const dotGeo = new THREE.CircleGeometry(12, 32);
+        const dotGeo = new THREE.CircleGeometry(10, 32);
         const dotMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, depthTest: false, blending: THREE.NormalBlending, transparent: false });
         const dotMesh = new THREE.Mesh(dotGeo, dotMat);
         dotMesh.visible = false;
@@ -270,13 +309,55 @@ function initFloorMap(containerId, floorNum, roomData) {
     const onMouseLeave = () => {
         mouse.x = -1000;
         mouse.y = -1000;
-        tooltip.transition().duration(400).style("opacity", 0);
+        if (!isTooltipLocked) {
+            tooltip.transition().duration(400).style("opacity", 0);
+        }
     };
     renderer.domElement.addEventListener('mouseleave', onMouseLeave, false);
 
+    const onMouseClick = (event) => {
+        if (floorNum !== currentFloor) return;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(interactableMeshes, false);
+        
+        if (intersects.length > 0) {
+            isTooltipLocked = true;
+            lockedObject = intersects[0].object;
+            
+            interactableMeshes.forEach(m => {
+                m.userData.lineMesh.material.color.setHex(0x000000);
+                m.userData.lineMesh.material.opacity = 0.1;
+                m.material.opacity = m.userData.baseOpacity;
+            });
+            lockedObject.userData.lineMesh.material.color.setHex(0xB3A369);
+            lockedObject.userData.lineMesh.material.opacity = 1.0;
+            lockedObject.material.opacity = 1.0;
+
+            tooltip.transition().duration(100).style("opacity", 1);
+            tooltip.html(getTooltipHTML(lockedObject.userData))
+                .style("left", mouse.pageX + "px")
+                .style("top", mouse.pageY + "px")
+                .style("pointer-events", "auto");
+        } else {
+            if (isTooltipLocked) {
+                interactableMeshes.forEach(m => {
+                    m.userData.lineMesh.material.color.setHex(0x000000);
+                    m.userData.lineMesh.material.opacity = 0.1;
+                    m.material.opacity = m.userData.baseOpacity;
+                });
+            }
+            isTooltipLocked = false;
+            lockedObject = null;
+            tooltip.transition().duration(400).style("opacity", 0);
+            tooltip.style("pointer-events", "none");
+        }
+    };
+    renderer.domElement.addEventListener('click', onMouseClick, false);
+
     floorScenes[floorNum] = {
         container, renderer, scene, camera, controls,
-        busynessPlaneGeo, busynessMesh,
+        crowdednessPlaneGeo, crowdednessMesh,
         noisePlaneGeo, noiseSurfaceMesh,
         raycaster, mouse, interactableMeshes, floorRooms,
         hoveredBox: null, floorNum: floorNum
@@ -302,28 +383,27 @@ function animate() {
                 });
             }
         });
+
         // Strict gating: Only process raycasting and control updates for the physically visible floor.
-        // This solves the bug where tooltips from hidden floors (like Floor 3) were being hit while on Floor 2.
         if (ctx.floorNum === currentFloor) {
             ctx.controls.update();
 
             ctx.raycaster.setFromCamera(ctx.mouse, ctx.camera);
-            // Explicitly set recursive to false so we don't raycast against the border lines!
             const intersects = ctx.raycaster.intersectObjects(ctx.interactableMeshes, false);
             
             if (intersects.length > 0) {
                 const hovered = intersects[0].object;
                 const d = hovered.userData;
                 
-                if (ctx.hoveredBox !== hovered) {
+                if (ctx.hoveredBox !== hovered && !isTooltipLocked) {
                     // Reset old box visuals
-                    if (ctx.hoveredBox) {
+                    if (ctx.hoveredBox && ctx.hoveredBox !== lockedObject) {
                         ctx.hoveredBox.material.opacity = ctx.hoveredBox.userData.baseOpacity;
                         ctx.hoveredBox.userData.lineMesh.material.color.setHex(0x000000);
                         ctx.hoveredBox.userData.lineMesh.material.opacity = 0.1;
                     }
                     
-                    // Light up newly hovered box borders so the user clearly sees the boundary constraint!
+                    // Light up newly hovered box borders
                     ctx.hoveredBox = hovered;
                     ctx.hoveredBox.material.opacity = 1.0; 
                     ctx.hoveredBox.userData.lineMesh.material.color.setHex(0xB3A369); // GT Gold Edge
@@ -332,83 +412,32 @@ function animate() {
                     tooltip.transition().duration(100).style("opacity", 1);
                 }
                 
-                let tooltipContent = `<strong style="color: #003057; font-size: 15px; text-transform: uppercase;">${d.name}</strong><br/>
-                    <span style="color: #666666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Area ${d.id} | Floor ${d.floor}</span><br/>
-                    <hr style="border:none; border-top:1px solid #e0e0e0; margin: 8px 0;">`;
-                if (d.csvData) {
-                    const noise = +d.csvData['Decibel level (dBA)'];
-                    const students = +d.csvData['Total num students'];
-                    const noise_t = Math.max(0, Math.min(1, (noise - 45) / 27));
-                    const busy_t  = Math.max(0, Math.min(1, students / 65));
-
-                    // Individual axis colors
-                    const blueR = Math.round(255 + (46  - 255) * busy_t);
-                    const blueG = Math.round(255 + (75  - 255) * busy_t);
-                    const blueB = Math.round(255 + (126 - 255) * busy_t);
-                    const goldR = Math.round(255 + (179 - 255) * noise_t);
-                    const goldG = Math.round(255 + (163 - 255) * noise_t);
-                    const goldB = Math.round(255 + (105 - 255) * noise_t);
-                    const busynessColor = `rgb(${blueR},${blueG},${blueB})`;
-                    const noiseColor    = `rgb(${goldR},${goldG},${goldB})`;
-                    const bivariateColor = getBivariateColor(busy_t, noise_t);
-
-                    const busyPercent = Math.round(busy_t * 100);
-
-                    tooltipContent += `
-                    <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12px; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 7px;">
-                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${busynessColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
-                            <span style="color: #333;"><b>Busyness:</b> <strong style="color: #2e4b7e;">${busyPercent}% (${students} students)</strong></span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 7px;">
-                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${noiseColor}; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;"></div>
-                            <span style="color: #333;"><b>Noise:</b> <strong style="color: #B3A369;">${noise} dBA</strong></span>
-                        </div>
-                    </div>`;
-                    const studying = +d.csvData['Num studying'] || 0;
-                    const eating = +d.csvData['Num eating'] || 0;
-                    const talking = +d.csvData['Num talking'] || 0;
-                    const totalAct = studying + eating + talking;
-                    const sP = totalAct > 0 ? Math.round((studying / totalAct) * 100) : 0;
-                    const eP = totalAct > 0 ? Math.round((eating / totalAct) * 100) : 0;
-                    const tP = totalAct > 0 ? Math.round((talking / totalAct) * 100) : 0;
-
-                    tooltipContent += `
-                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 10px;">
-                        <div style="width: 12px; height: 12px; border-radius: 3px; background: ${bivariateColor}; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0;"></div>
-                        <div style="font-size: 11px; color: #64748b; line-height: 1.4;"><b>Bivariate color:</b> Noise + busyness</div>
-                    </div>
-                    <div style="font-size: 11px; color: #555555; border-top: 1px dashed #e0e0e0; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #3B82F6; flex-shrink: 0;"></div>
-                            <span>${studying} studying (${sP}%)</span>
-                        </div>
-                        <span style="color: #cbd5e1;">&bull;</span>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; flex-shrink: 0;"></div>
-                            <span>${eating} eating (${eP}%)</span>
-                        </div>
-                        <span style="color: #cbd5e1;">&bull;</span>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex-shrink: 0;"></div>
-                            <span>${talking} talking (${tP}%)</span>
-                        </div>
-                    </div>`;
+                if (!isTooltipLocked) {
+                    tooltip.html(getTooltipHTML(d))
+                        .style("left", ctx.mouse.pageX + "px")
+                        .style("top", ctx.mouse.pageY + "px")
+                        .style("pointer-events", "none");
                 }
-
-                tooltip.html(tooltipContent)
-                    .style("left", ctx.mouse.pageX + "px")
-                    .style("top", ctx.mouse.pageY + "px");
-
             } else {
-                if (ctx.hoveredBox !== null) {
-                    ctx.hoveredBox.material.opacity = ctx.hoveredBox.userData.baseOpacity;
-                    ctx.hoveredBox.userData.lineMesh.material.color.setHex(0x000000);
-                    ctx.hoveredBox.userData.lineMesh.material.opacity = 0.1;
+                if (ctx.hoveredBox !== null && !isTooltipLocked) {
+                    if (ctx.hoveredBox !== lockedObject) {
+                        ctx.hoveredBox.material.opacity = ctx.hoveredBox.userData.baseOpacity;
+                        ctx.hoveredBox.userData.lineMesh.material.color.setHex(0x000000);
+                        ctx.hoveredBox.userData.lineMesh.material.opacity = 0.1;
+                    }
                     ctx.hoveredBox = null;
                     tooltip.transition().duration(400).style("opacity", 0);
                 }
             }
+
+            // Dynamic Scaling for Glyphs to maintain constant screen size
+            const dist = ctx.camera.position.distanceTo(new THREE.Vector3(0,0,0));
+            const glyphScale = dist / 1500; // More conservative scaling (smaller on screen)
+            ctx.interactableMeshes.forEach(mesh => {
+                if (mesh.userData.glyphGroup) {
+                    mesh.userData.glyphGroup.scale.set(glyphScale, glyphScale, 1);
+                }
+            });
 
             ctx.renderer.render(ctx.scene, ctx.camera);
         }
@@ -422,10 +451,10 @@ function updateFloorDisplacement(floorNum) {
 
     const tempColor = new THREE.Color();
 
-    // --- BUSYNESS SURFACE (Blue, driven by Total num students) ---
+    // --- CROWDEDNESS SURFACE (Blue, driven by Total num students) ---
     {
-        const positions = ctx.busynessPlaneGeo.attributes.position;
-        const colors = ctx.busynessPlaneGeo.attributes.color;
+        const positions = ctx.crowdednessPlaneGeo.attributes.position;
+        const colors = ctx.crowdednessPlaneGeo.attributes.color;
         const count = positions.count;
         const blueColor = new THREE.Color('#2e4b7e');
 
@@ -451,9 +480,9 @@ function updateFloorDisplacement(floorNum) {
             positions.setZ(i, clampedZ);
             colors.setXYZ(i, blueColor.r, blueColor.g, blueColor.b);
         }
-        ctx.busynessPlaneGeo.attributes.position.needsUpdate = true;
-        ctx.busynessPlaneGeo.attributes.color.needsUpdate = true;
-        ctx.busynessPlaneGeo.computeVertexNormals();
+        ctx.crowdednessPlaneGeo.attributes.position.needsUpdate = true;
+        ctx.crowdednessPlaneGeo.attributes.color.needsUpdate = true;
+        ctx.crowdednessPlaneGeo.computeVertexNormals();
     }
 
     // --- NOISE SURFACE (Gold, driven by Decibel level) ---
@@ -513,7 +542,7 @@ function updateFloorDisplacement(floorNum) {
             peakZ += (students / 65) * 700 * Math.exp(-distSq / spread);
         });
 
-        const anyVisible = isBusynessVisible || isNoiseWaveVisible;
+        const anyVisible = isCrowdednessVisible || isNoiseWaveVisible;
         // Glyphs and Labels are now on a fixed plane at Z=5 to stay unaffected by topography peaks
     });
 }
@@ -523,8 +552,8 @@ function updateAllMaps() {
         const ctx = floorScenes[floorNum];
         if (!ctx) return;
         
-        ctx.busynessMesh.material.opacity = 0.75;
-        ctx.busynessMesh.visible = isBusynessVisible;
+        ctx.crowdednessMesh.material.opacity = 0.75;
+        ctx.crowdednessMesh.visible = isCrowdednessVisible;
         ctx.noiseSurfaceMesh.material.opacity = 0.75;
         ctx.noiseSurfaceMesh.visible = isNoiseWaveVisible;
         
@@ -558,7 +587,7 @@ function updateAllMaps() {
                         const tP = numTalking / totalActivity;
                         const eP = numEating / totalActivity;
 
-                        const inner = 18, outer = 28;
+                        const inner = 20, outer = 44; // Thick rings with a clear gap from the small dot
                         const sAngle = sP * Math.PI * 2;
                         const tAngle = tP * Math.PI * 2;
                         const eAngle = eP * Math.PI * 2;
@@ -621,6 +650,10 @@ function updateAllMaps() {
         // Trigger rebuild
         updateFloorDisplacement(floorNum);
     });
+
+    if (isTooltipLocked && lockedObject) {
+        tooltip.html(getTooltipHTML(lockedObject.userData));
+    }
 }
 
 d3.select("#btn-12pm").on("click", function() {
@@ -645,16 +678,38 @@ function formatSliderTime(value) {
     return `${displayHr}:00 ${ampm}`;
 }
 
+function updateThemeColor(val) {
+    const t = (val - 12) / 8; // 0 at 12pm, 1 at 8pm
+    
+    // Interpolate between GT Gold (179,163,105) and GT Blue (0,48,87)
+    const r = Math.round(179 + (0 - 179) * t);
+    const g = Math.round(163 + (48 - 163) * t);
+    const b = Math.round(105 + (87 - 105) * t);
+    
+    // We only update the 3D scene background now, keeping the map environment dynamic
+    // Reducing lerp from 0.9 to 0.8 for more vibrant colors
+    const sceneColor = new THREE.Color(`rgb(${r}, ${g}, ${b})`).lerp(new THREE.Color(1,1,1), 0.82);
+    
+    // Update All Scenes
+    Object.values(floorScenes).forEach(ctx => {
+        if (ctx.scene) {
+            ctx.scene.background = sceneColor;
+        }
+    });
+}
+
 function onSliderChange(val) {
     currentSliderValue = parseInt(val);
     document.getElementById('slider-time-label').innerText = formatSliderTime(currentSliderValue);
+    
+    updateThemeColor(currentSliderValue);
     
     currentTime = `4/7/2026 ${currentSliderValue}:00`;
     updateAllMaps();
 }
 
-document.getElementById('toggle-busyness-wave').addEventListener('change', function(e) {
-    isBusynessVisible = e.target.checked;
+document.getElementById('toggle-crowdedness-wave').addEventListener('change', function(e) {
+    isCrowdednessVisible = e.target.checked;
     updateAllMaps();
 });
 
@@ -701,7 +756,7 @@ window.updateFilters = function() {
 };
 
 function getBivariateColor(busy_t, noise_t) {
-    // Blue channel: white → #2e4b7e (busyness)
+    // Blue channel: white → #2e4b7e (crowdedness)
     const bR = Math.round(255 + (46  - 255) * busy_t);
     const bG = Math.round(255 + (75  - 255) * busy_t);
     const bB = Math.round(255 + (126 - 255) * busy_t);
@@ -710,7 +765,7 @@ function getBivariateColor(busy_t, noise_t) {
     const gG = Math.round(255 + (163 - 255) * noise_t);
     const gB = Math.round(255 + (105 - 255) * noise_t);
 
-    if (colorMode === 'busyness') return `rgb(${bR},${bG},${bB})`;
+    if (colorMode === 'crowdedness') return `rgb(${bR},${bG},${bB})`;
     if (colorMode === 'noise')    return `rgb(${gR},${gG},${gB})`;
     if (colorMode === 'none')     return '#ffffff';
     
@@ -762,7 +817,8 @@ Promise.all([
     initFloorMap("#map-container-2", 2, currentRoomData);
     initFloorMap("#map-container-3", 3, currentRoomData);
     
-    // Explicit initialization to paint the floor plan colors natively on mount
+    // Explicit initialization
+    updateThemeColor(currentSliderValue);
     updateAllMaps();
     drawBivariateGrid();
 

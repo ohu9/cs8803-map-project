@@ -74,7 +74,7 @@
 
         <div class="time-slider-container">
             <span id="slider-time-label">12:00 PM</span>
-            <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="1" value="12" oninput="onSliderChange(this.value)">
+            <input type="range" id="timeSlider" class="time-slider" min="12" max="20" step="2" value="12" oninput="onSliderChange(this.value)">
         </div>
     </div>
     
@@ -83,7 +83,7 @@
         <!-- CHOROPLETH LEGEND (inline, same height as map) -->
         <div class="bivariate-legend" style="width: 220px; flex-shrink: 0; height: 620px; overflow-y: auto; position: static; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
             <span class="legend-title">Floor Color Scale</span>
-            <div class="legend-subtitle">Noise (gold) × Busyness (blue)</div>
+            <div class="legend-subtitle">Noise (gold) × Crowdedness (blue)</div>
 
             <!-- 2D Bivariate Grid -->
             <div style="display: flex; align-items: flex-start; gap: 4px; margin: 12px 0 4px;">
@@ -101,18 +101,18 @@
                         <span style="color: #aaa;">Empty</span>
                         <span style="color: #2e4b7e;">Crowded</span>
                     </div>
-                    <div style="text-align: center; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; width: 80px; margin-top: 3px;">Busyness</div>
+                    <div style="text-align: center; font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; width: 80px; margin-top: 3px;">Crowdedness</div>
                 </div>
             </div>
 
             <!-- Color Mode -->
-            <div style="border-top: 1px solid rgba(0,0,0,1); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
+            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: 4px;">
                 <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Color Mode</div>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
                     <input type="radio" name="color-mode" value="bivariate" id="mode-bivariate" checked style="cursor: pointer;"> Bivariate (default)
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
-                    <input type="radio" name="color-mode" value="busyness" id="mode-busyness" style="cursor: pointer; accent-color: #2e4b7e;"> Busyness Only
+                    <input type="radio" name="color-mode" value="crowdedness" id="mode-crowdedness" style="cursor: pointer; accent-color: #2e4b7e;"> Crowdedness Only
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; color: #475569; gap: 6px;">
                     <input type="radio" name="color-mode" value="noise" id="mode-noise" style="cursor: pointer; accent-color: #B3A369;"> Noise Only
@@ -126,7 +126,7 @@
             <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
                 <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 2px;">Topography Waves</div>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
-                    <input type="checkbox" id="toggle-busyness-wave" style="accent-color: #2e4b7e; cursor: pointer;"> Show Busyness Wave
+                    <input type="checkbox" id="toggle-crowdedness-wave" style="accent-color: #2e4b7e; cursor: pointer;"> Show Crowdedness Wave
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer; font-size: 11px; font-weight: 600; color: #475569; gap: 6px;">
                     <input type="checkbox" id="toggle-noise-wave" style="accent-color: #B3A369; cursor: pointer;"> Show Noise Wave
@@ -134,7 +134,7 @@
             </div>
 
             <!-- Activity Composition Legend -->
-            <div style="border-top: 1px solid rgba(0,0,0,1); padding-top: 10px; margin-top: 8px;">
+            <div style="border-top: 1px solid rgba(0,0,0,0.06); padding-top: 10px; margin-top: 8px;">
                 <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 6px;">Activity Composition</div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
                     <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #64748b;">
